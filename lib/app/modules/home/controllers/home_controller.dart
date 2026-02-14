@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../../../data/models/billboard_item.dart';
 import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/province_model.dart';
+import '../../../data/models/testimonial_item.dart';
 
 class HomeController extends GetxController {
   static const _provincesApi =
@@ -14,6 +15,8 @@ class HomeController extends GetxController {
       'https://tablo.ir/my_api/billboards/map.php';
   static const _billboardListApi =
       'https://tablo.ir/my_api/billboards/list.php?limit=5';
+  static const _testimonialsApi =
+      'https://tablo.ir/my_api/testimonials/list.php';
 
   final menuItems = const <String>[
     'صفحه اصلی',
@@ -34,6 +37,10 @@ class HomeController extends GetxController {
   final partyBillboards = <BillboardItem>[].obs;
   final partyBillboardsError = ''.obs;
 
+  final isLoadingTestimonials = false.obs;
+  final testimonials = <TestimonialItem>[].obs;
+  final testimonialsError = ''.obs;
+
   List<BillboardMapItem> get billboardsWithLocation =>
       billboards.where((item) => item.hasValidLocation).toList();
 
@@ -43,6 +50,7 @@ class HomeController extends GetxController {
     fetchProvinces();
     fetchBillboardsMap();
     fetchPartyBillboards();
+    fetchTestimonials();
   }
 
   Future<void> fetchProvinces() async {
@@ -148,4 +156,41 @@ class HomeController extends GetxController {
       isLoadingPartyBillboards.value = false;
     }
   }
+
+  Future<void> fetchTestimonials() async {
+    isLoadingTestimonials.value = true;
+    testimonialsError.value = '';
+
+    try {
+      final response = await http
+          .get(Uri.parse(_testimonialsApi))
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        testimonialsError.value = 'خطا در دریافت نظرات مشتریان.';
+        return;
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final success = decoded['success'] == true;
+      final items = decoded['testimonials'];
+
+      if (!success || items is! List) {
+        testimonialsError.value = 'پاسخ API نظرات معتبر نیست.';
+        return;
+      }
+
+      testimonials.assignAll(
+        items
+            .whereType<Map<String, dynamic>>()
+            .map(TestimonialItem.fromJson)
+            .toList(),
+      );
+    } catch (_) {
+      testimonialsError.value = 'اتصال به سرور نظرات برقرار نشد.';
+    } finally {
+      isLoadingTestimonials.value = false;
+    }
+  }
+
 }

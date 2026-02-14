@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../data/models/billboard_item.dart';
 import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/province_model.dart';
+import '../../../data/models/testimonial_item.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -208,6 +209,70 @@ class HomeView extends GetView<HomeController> {
                   }),
                   const SizedBox(height: 40),
                   Text(
+                    'نظرات مشتریان',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() {
+                    final isLoading = controller.isLoadingTestimonials.value;
+                    final hasError = controller.testimonialsError.value.isNotEmpty;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 230,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: controller.testimonials.isEmpty
+                                ? 1
+                                : controller.testimonials.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 16),
+                            itemBuilder: (context, index) {
+                              if (controller.testimonials.isEmpty) {
+                                return const _TestimonialCard(
+                                  item: TestimonialItem(
+                                    id: 'placeholder',
+                                    companyName: 'نمونه',
+                                    personName: 'کاربر نمونه',
+                                    role: 'مدیر',
+                                    quote:
+                                        'در حال بارگذاری نظرات مشتریان هستیم. در صورت مشکل اتصال، کمی بعد دوباره تلاش کنید.',
+                                    avatarUrl: '',
+                                  ),
+                                );
+                              }
+
+                              final item = controller.testimonials[index];
+                              return _TestimonialCard(item: item);
+                            },
+                          ),
+                        ),
+                        if (isLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        if (hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF1F2),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Text(controller.testimonialsError.value),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: 40),
+                  Text(
                     'نقشه بیلبوردها',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -330,6 +395,91 @@ class _PartyBillboardCard extends StatelessWidget {
                 Text('کد تابلو: ${item.code}'),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _TestimonialCard extends StatelessWidget {
+  const _TestimonialCard({required this.item});
+
+  final TestimonialItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 390,
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '❞',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              item.quote,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.8),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.personName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${item.role} | ${item.companyName}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.black54,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white,
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: const Color(0xFFE2E8F0),
+                  backgroundImage: item.safeAvatarUrl.isNotEmpty
+                      ? NetworkImage(item.safeAvatarUrl)
+                      : null,
+                  child: item.safeAvatarUrl.isEmpty
+                      ? Icon(
+                          Icons.person_outline,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                ),
+              ),
+            ],
           ),
         ],
       ),
