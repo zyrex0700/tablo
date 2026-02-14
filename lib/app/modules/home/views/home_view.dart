@@ -50,8 +50,12 @@ class HomeView extends GetView<HomeController> {
                         (item) => Padding(
                           padding: const EdgeInsets.only(left: 18),
                           child: TextButton(
-                            onPressed: () {},
-                            child: Text(item),
+                            onPressed: () {
+                              if (Get.currentRoute != item.route) {
+                                Get.toNamed(item.route);
+                              }
+                            },
+                            child: Text(item.title),
                           ),
                         ),
                       ),
