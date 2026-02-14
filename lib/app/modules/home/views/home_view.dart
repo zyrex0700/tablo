@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 
+import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/province_model.dart';
 import '../controllers/home_controller.dart';
 
@@ -129,6 +132,45 @@ class HomeView extends GetView<HomeController> {
                       ),
                     );
                   }),
+                  const SizedBox(height: 40),
+                  Text(
+                    'نقشه بیلبوردها',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'روی هر مارکر کلیک کنید تا مشخصات بیلبورد نمایش داده شود.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() {
+                    if (controller.isLoadingBillboards.value) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (controller.billboardsError.value.isNotEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Text(controller.billboardsError.value),
+                      );
+                    }
+
+                    return _BillboardsMap(
+                      items: controller.billboardsWithLocation,
+                    );
+                  }),
                 ],
               ),
             ),
@@ -177,6 +219,128 @@ class _ProvinceCard extends StatelessWidget {
                   ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BillboardsMap extends StatelessWidget {
+  const _BillboardsMap({required this.items});
+
+  final List<BillboardMapItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: const Text('لوکیشن معتبر برای نمایش روی نقشه پیدا نشد.'),
+      );
+    }
+
+    final center = LatLng(items.first.latitude, items.first.longitude);
+
+    return SizedBox(
+      height: 420,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: FlutterMap(
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: 6,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.tablo.rebuild',
+            ),
+            MarkerLayer(
+              markers: items
+                  .map(
+                    (item) => Marker(
+                      point: LatLng(item.latitude, item.longitude),
+                      width: 38,
+                      height: 38,
+                      child: GestureDetector(
+                        onTap: () => _showBillboardInfo(context, item),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2563EB),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.location_on,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showBillboardInfo(BuildContext context, BillboardMapItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'مشخصات بیلبورد',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              _InfoRow(title: 'شناسه', value: item.id),
+              _InfoRow(title: 'شهر', value: item.city),
+              _InfoRow(title: 'محدوده', value: item.area),
+              _InfoRow(title: 'استان', value: item.provinceId),
+              _InfoRow(title: 'عرض جغرافیایی', value: item.latitude.toString()),
+              _InfoRow(title: 'طول جغرافیایی', value: item.longitude.toString()),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Text(
+            '$title: ',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          Expanded(child: Text(value.isEmpty ? '-' : value)),
         ],
       ),
     );

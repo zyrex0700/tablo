@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/province_model.dart';
 
 class HomeController extends GetxController {
   static const _provincesApi =
       'https://tablo.ir/my_api/provinces/list.php';
+  static const _billboardMapApi =
+      'https://tablo.ir/my_api/billboards/map.php';
 
   final menuItems = const <String>[
     'صفحه اصلی',
@@ -20,10 +23,18 @@ class HomeController extends GetxController {
   final provinces = <ProvinceModel>[].obs;
   final provincesError = ''.obs;
 
+  final isLoadingBillboards = false.obs;
+  final billboards = <BillboardMapItem>[].obs;
+  final billboardsError = ''.obs;
+
+  List<BillboardMapItem> get billboardsWithLocation =>
+      billboards.where((item) => item.hasValidLocation).toList();
+
   @override
   void onInit() {
     super.onInit();
     fetchProvinces();
+    fetchBillboardsMap();
   }
 
   Future<void> fetchProvinces() async {
@@ -57,6 +68,40 @@ class HomeController extends GetxController {
       provincesError.value = 'اتصال به سرور برقرار نشد.';
     } finally {
       isLoadingProvinces.value = false;
+    }
+  }
+
+  Future<void> fetchBillboardsMap() async {
+    isLoadingBillboards.value = true;
+    billboardsError.value = '';
+
+    try {
+      final response = await http.get(Uri.parse(_billboardMapApi));
+
+      if (response.statusCode != 200) {
+        billboardsError.value = 'خطا در دریافت موقعیت بیلبوردها.';
+        return;
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final success = decoded['success'] == true;
+      final items = decoded['data'];
+
+      if (!success || items is! List) {
+        billboardsError.value = 'پاسخ API نقشه معتبر نیست.';
+        return;
+      }
+
+      billboards.assignAll(
+        items
+            .whereType<Map<String, dynamic>>()
+            .map(BillboardMapItem.fromJson)
+            .toList(),
+      );
+    } catch (_) {
+      billboardsError.value = 'اتصال به سرور نقشه برقرار نشد.';
+    } finally {
+      isLoadingBillboards.value = false;
     }
   }
 }
