@@ -118,7 +118,9 @@ class HomeController extends GetxController {
     partyBillboardsError.value = '';
 
     try {
-      final response = await http.get(Uri.parse(_billboardListApi));
+      final response = await http
+          .get(Uri.parse(_billboardListApi))
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         partyBillboardsError.value = 'خطا در دریافت لیست تابلو پارتی.';

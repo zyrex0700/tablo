@@ -13,9 +13,9 @@ class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
   static const _mainBannerUrl =
-      'http://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
+      'https://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
   static const _partyBannerUrl =
-      'http://tablo.ir/my_api/images/tablo-party.png';
+      'https://tablo.ir/my_api/images/tablo-party.png';
 
   @override
   Widget build(BuildContext context) {
@@ -120,42 +120,47 @@ class HomeView extends GetView<HomeController> {
                   ),
                   const SizedBox(height: 16),
                   Obx(() {
-                    if (controller.isLoadingPartyBillboards.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
+                    final isLoading = controller.isLoadingPartyBillboards.value;
+                    final hasError = controller.partyBillboardsError.value.isNotEmpty;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 250,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: controller.partyBillboards.length + 1,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return _PartyBannerCard(imageUrl: _partyBannerUrl);
+                              }
+
+                              final item = controller.partyBillboards[index - 1];
+                              return _PartyBillboardCard(item: item);
+                            },
+                          ),
                         ),
-                      );
-                    }
-
-                    if (controller.partyBillboardsError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.partyBillboardsError.value),
-                      );
-                    }
-
-                    return SizedBox(
-                      height: 250,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: controller.partyBillboards.length + 1,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _PartyBannerCard(imageUrl: _partyBannerUrl);
-                          }
-
-                          final item = controller.partyBillboards[index - 1];
-                          return _PartyBillboardCard(item: item);
-                        },
-                      ),
+                        if (isLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        if (hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF1F2),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Text(controller.partyBillboardsError.value),
+                            ),
+                          ),
+                      ],
                     );
                   }),
                   const SizedBox(height: 38),
