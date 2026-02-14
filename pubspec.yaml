@@ -23,3 +23,20 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: IRANYekan
+      fonts:
+        - asset: assets/fonts/iranyekan/IRANYekanThinRd.ttf
+          weight: 100
+        - asset: assets/fonts/iranyekan/IRANYekanLightRd.ttf
+          weight: 300
+        - asset: assets/fonts/iranyekan/IRANYekanRegularRd.ttf
+          weight: 400
+        - asset: assets/fonts/iranyekan/IRANYekanMediumRd.ttf
+          weight: 500
+        - asset: assets/fonts/iranyekan/IRANYekanBoldRd.ttf
+          weight: 700
+        - asset: assets/fonts/iranyekan/IRANYekanExtraBoldRd.ttf
+          weight: 800
+        - asset: assets/fonts/iranyekan/IRANYekanBlackRd.ttf
+          weight: 900

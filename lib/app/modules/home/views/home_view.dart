@@ -16,9 +16,9 @@ class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
   static const _mainBannerUrl =
-      'https://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
+      'http://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
   static const _partyBannerUrl =
-      'https://tablo.ir/my_api/images/tablo-party.png';
+      'http://tablo.ir/my_api/images/tablo-party.png';
 
   @override
   Widget build(BuildContext context) {
@@ -83,91 +83,34 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(32, 56, 32, 24),
+              padding: const EdgeInsets.fromLTRB(32, 15, 32, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'بستر هوشمند رزرو بیلبورد در سراسر ایران',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    'در این نسخه جدید، تابلوهای تبلیغاتی را مانند محصول نمایش می‌دهیم تا جستجو، مقایسه و انتخاب برای برندها سریع‌تر و دقیق‌تر انجام شود.',
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 28),
-                  FilledButton(
-                    onPressed: () {},
-                    child: const Text('مشاهده تابلوها'),
-                  ),
-                  const SizedBox(height: 28),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: AspectRatio(
-                      aspectRatio: 3.6,
-                      child: Image.network(
-                        _mainBannerUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const DecoratedBox(
-                          decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                          child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 34),
-                  Text(
-                    'تابلو پارتی',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Obx(() {
-                    final isLoading = controller.isLoadingPartyBillboards.value;
-                    final hasError = controller.partyBillboardsError.value.isNotEmpty;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 250,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: controller.partyBillboards.length + 1,
-                            separatorBuilder: (_, __) => const SizedBox(width: 14),
-                            itemBuilder: (context, index) {
-                              if (index == 0) {
-                                return _PartyBannerCard(imageUrl: _partyBannerUrl);
-                              }
-
-                              final item = controller.partyBillboards[index - 1];
-                              return _PartyBillboardCard(item: item);
-                            },
-                          ),
+                    if (controller.isLoadingBillboards.value) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: CircularProgressIndicator(),
                         ),
-                        if (isLoading)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 12),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        if (hasError)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Text(controller.partyBillboardsError.value),
-                            ),
-                          ),
-                      ],
+                      );
+                    }
+
+                    if (controller.billboardsError.value.isNotEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Text(controller.billboardsError.value),
+                      );
+                    }
+
+                    return _BillboardsMap(
+                      items: controller.billboardsWithLocation,
                     );
                   }),
                   const SizedBox(height: 38),
@@ -213,6 +156,67 @@ class HomeView extends GetView<HomeController> {
                       ),
                     );
                   }),
+                  const SizedBox(height: 28),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Image.network(
+                      _mainBannerUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const DecoratedBox(
+                        decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                        child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 34),
+                  Text(
+                    'تابلو پارتی',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() {
+                    if (controller.isLoadingPartyBillboards.value) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (controller.partyBillboardsError.value.isNotEmpty) {
+                      return Container(
+                        width: double.infinity,
+
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Text(controller.partyBillboardsError.value),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 350,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: controller.partyBillboards.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return _PartyBannerCard(imageUrl: _partyBannerUrl);
+                          }
+
+                          final item = controller.partyBillboards[index - 1];
+                          return _PartyBillboardCard(item: item);
+                        },
+                      ),
+                    );
+                  }),
+
                   const SizedBox(height: 40),
                   Text(
                     'برندهای همکار',
@@ -221,42 +225,42 @@ class HomeView extends GetView<HomeController> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Obx(() {
-                    final list = controller.brands;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _AutoBrandsRow(
-                          brands: list,
-                          moveRight: true,
-                        ),
-                        const SizedBox(height: 14),
-                        _AutoBrandsRow(
-                          brands: list,
-                          moveRight: false,
-                        ),
-                        if (controller.isLoadingBrands.value)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 10),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        if (controller.brandsError.value.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Text(controller.brandsError.value),
-                            ),
-                          ),
-                      ],
-                    );
-                  }),
+                  // Obx(() {
+                  //   final list = controller.brands;
+                  //
+                  //   return Column(
+                  //     crossAxisAlignment: CrossAxisAlignment.start,
+                  //     children: [
+                  //       _AutoBrandsRow(
+                  //         brands: list,
+                  //         moveRight: true,
+                  //       ),
+                  //       const SizedBox(height: 14),
+                  //       _AutoBrandsRow(
+                  //         brands: list,
+                  //         moveRight: false,
+                  //       ),
+                  //       if (controller.isLoadingBrands.value)
+                  //         const Padding(
+                  //           padding: EdgeInsets.only(top: 10),
+                  //           child: Center(child: CircularProgressIndicator()),
+                  //         ),
+                  //       if (controller.brandsError.value.isNotEmpty)
+                  //         Padding(
+                  //           padding: const EdgeInsets.only(top: 10),
+                  //           child: Container(
+                  //             width: double.infinity,
+                  //             padding: const EdgeInsets.all(16),
+                  //             decoration: BoxDecoration(
+                  //               color: const Color(0xFFFFF1F2),
+                  //               borderRadius: BorderRadius.circular(15),
+                  //             ),
+                  //             child: Text(controller.brandsError.value),
+                  //           ),
+                  //         ),
+                  //     ],
+                  //   );
+                  // }),
                   const SizedBox(height: 40),
                   Text(
                     'نظرات مشتریان',
@@ -270,7 +274,7 @@ class HomeView extends GetView<HomeController> {
                     final hasError = controller.testimonialsError.value.isNotEmpty;
 
                     return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(
                           height: 230,
@@ -322,44 +326,7 @@ class HomeView extends GetView<HomeController> {
                     );
                   }),
                   const SizedBox(height: 40),
-                  Text(
-                    'نقشه بیلبوردها',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'نقاط نزدیک به‌صورت گروهی نمایش داده می‌شوند و با زوم بیشتر از هم جدا می‌شوند.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    if (controller.isLoadingBillboards.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
 
-                    if (controller.billboardsError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.billboardsError.value),
-                      );
-                    }
-
-                    return _BillboardsMap(
-                      items: controller.billboardsWithLocation,
-                    );
-                  }),
                 ],
               ),
             ),
@@ -378,7 +345,7 @@ class _PartyBannerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 300,
+      width: 250,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -387,7 +354,7 @@ class _PartyBannerCard extends StatelessWidget {
       ),
       child: Image.network(
         imageUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.fitHeight,
         errorBuilder: (_, __, ___) => const DecoratedBox(
           decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
           child: Center(child: Text('خطا در بارگذاری بنر تابلو پارتی')),
@@ -405,7 +372,7 @@ class _PartyBillboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      width: 250,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -415,7 +382,8 @@ class _PartyBillboardCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          Container(
+            height: 175,
             child: Image.network(
               item.imageUrl,
               width: double.infinity,
@@ -587,7 +555,7 @@ class _TestimonialCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Align(
             alignment: Alignment.centerRight,
@@ -665,23 +633,23 @@ class _ProvinceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 180,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(15),
             child: Image.network(
               province.imageUrl,
-              width: double.infinity,
+              width:150,
+              height: 130, // پیشنهاد برای ثابت شدن UI
+
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+              errorBuilder: (_, __, ___) => const SizedBox(
+                height: 110,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                  child: Icon(Icons.image_not_supported_outlined),
+                ),
               ),
             ),
           ),
@@ -690,13 +658,14 @@ class _ProvinceCard extends StatelessWidget {
             child: Text(
               province.name,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
       ),
     );
+
   }
 }
 

@@ -6,8 +6,6 @@ class AppTheme {
   static const _brandColor = Color(0xFF2B38D2);
 
   static ThemeData get lightTheme {
-    final textTheme = GoogleFonts.vazirmatnTextTheme();
-
     const colorScheme = ColorScheme.light(
       primary: _brandColor,
       secondary: _brandColor,
@@ -21,7 +19,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      textTheme: textTheme,
+      fontFamily: 'IRANYekan', // 👈 اینجا
       colorScheme: colorScheme,
       primaryColor: _brandColor,
       scaffoldBackgroundColor: const Color(0xFFF8FAFC),
@@ -67,4 +65,5 @@ class AppTheme {
       ),
     );
   }
+
 }
