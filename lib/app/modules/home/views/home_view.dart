@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -50,7 +51,7 @@ class HomeView extends GetView<HomeController> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB),
+                          color: theme.colorScheme.primary,
                           borderRadius: BorderRadius.circular(15),
                         ),
                         alignment: Alignment.center,
@@ -141,7 +142,7 @@ class HomeView extends GetView<HomeController> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'روی هر مارکر کلیک کنید تا مشخصات بیلبورد نمایش داده شود.',
+                    'نقاط نزدیک به‌صورت گروهی نمایش داده می‌شوند و با زوم بیشتر از هم جدا می‌شوند.',
                     style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
@@ -245,6 +246,7 @@ class _BillboardsMap extends StatelessWidget {
     }
 
     final center = LatLng(items.first.latitude, items.first.longitude);
+    final primary = Theme.of(context).colorScheme.primary;
 
     return SizedBox(
       height: 420,
@@ -254,35 +256,61 @@ class _BillboardsMap extends StatelessWidget {
           options: MapOptions(
             initialCenter: center,
             initialZoom: 6,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all,
+            ),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.tablo.rebuild',
             ),
-            MarkerLayer(
-              markers: items
-                  .map(
-                    (item) => Marker(
-                      point: LatLng(item.latitude, item.longitude),
-                      width: 38,
-                      height: 38,
-                      child: GestureDetector(
-                        onTap: () => _showBillboardInfo(context, item),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2563EB),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.white,
+            MarkerClusterLayerWidget(
+              options: MarkerClusterLayerOptions(
+                maxClusterRadius: 55,
+                size: const Size(44, 44),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.all(40),
+                maxZoom: 15,
+                markers: items
+                    .map(
+                      (item) => Marker(
+                        point: LatLng(item.latitude, item.longitude),
+                        width: 38,
+                        height: 38,
+                        child: GestureDetector(
+                          onTap: () => _showBillboardInfo(context, item),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: primary,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
+                    )
+                    .toList(),
+                builder: (context, markers) {
+                  return Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: primary,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  )
-                  .toList(),
+                    child: Text(
+                      markers.length.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),

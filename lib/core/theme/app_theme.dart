@@ -10,7 +10,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       textTheme: textTheme,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2563EB)),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2B38D2)),
       scaffoldBackgroundColor: const Color(0xFFF8FAFC),
       appBarTheme: const AppBarTheme(
         centerTitle: true,
