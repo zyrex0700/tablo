@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/province_model.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -21,6 +22,7 @@ class HomeView extends GetView<HomeController> {
                 border: Border(
                   bottom: BorderSide(color: Color(0xFFE2E8F0)),
                 ),
+                borderRadius: BorderRadius.all(Radius.circular(15)),
               ),
               child: Row(
                 children: [
@@ -46,7 +48,7 @@ class HomeView extends GetView<HomeController> {
                         height: 44,
                         decoration: BoxDecoration(
                           color: const Color(0xFF2563EB),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(15),
                         ),
                         alignment: Alignment.center,
                         child: const Text(
@@ -84,11 +86,98 @@ class HomeView extends GetView<HomeController> {
                     onPressed: () {},
                     child: const Text('مشاهده تابلوها'),
                   ),
+                  const SizedBox(height: 38),
+                  Text(
+                    'محبوب ترین مناطق',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() {
+                    if (controller.isLoadingProvinces.value) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (controller.provincesError.value.isNotEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Text(controller.provincesError.value),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 200,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: controller.provinces.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final province = controller.provinces[index];
+                          return _ProvinceCard(province: province);
+                        },
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProvinceCard extends StatelessWidget {
+  const _ProvinceCard({required this.province});
+
+  final ProvinceModel province;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 180,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Image.network(
+              province.imageUrl,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const DecoratedBox(
+                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              province.name,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }
