@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
@@ -6,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../data/models/billboard_item.dart';
 import '../../../data/models/billboard_map_item.dart';
+import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
 import '../controllers/home_controller.dart';
@@ -209,6 +211,50 @@ class HomeView extends GetView<HomeController> {
                   }),
                   const SizedBox(height: 40),
                   Text(
+                    'برندهای همکار',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Obx(() {
+                    final list = controller.brands;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _AutoBrandsRow(
+                          brands: list,
+                          moveRight: true,
+                        ),
+                        const SizedBox(height: 14),
+                        _AutoBrandsRow(
+                          brands: list,
+                          moveRight: false,
+                        ),
+                        if (controller.isLoadingBrands.value)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        if (controller.brandsError.value.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF1F2),
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Text(controller.brandsError.value),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: 40),
+                  Text(
                     'نظرات مشتریان',
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -402,6 +448,125 @@ class _PartyBillboardCard extends StatelessWidget {
   }
 }
 
+
+
+class _AutoBrandsRow extends StatefulWidget {
+  const _AutoBrandsRow({
+    required this.brands,
+    required this.moveRight,
+  });
+
+  final List<BrandItem> brands;
+  final bool moveRight;
+
+  @override
+  State<_AutoBrandsRow> createState() => _AutoBrandsRowState();
+}
+
+class _AutoBrandsRowState extends State<_AutoBrandsRow> {
+  final _controller = ScrollController();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _timer?.cancel();
+
+    _timer = Timer.periodic(const Duration(milliseconds: 35), (_) {
+      if (!_controller.hasClients) {
+        return;
+      }
+
+      const delta = 1.2;
+      final direction = widget.moveRight ? -delta : delta;
+      final next = _controller.offset + direction;
+      final max = _controller.position.maxScrollExtent;
+
+      if (next <= 0) {
+        _controller.jumpTo(max > 0 ? max : 0);
+        return;
+      }
+
+      if (next >= max) {
+        _controller.jumpTo(0);
+        return;
+      }
+
+      _controller.jumpTo(next);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.brands.isEmpty
+        ? const <BrandItem>[
+            const BrandItem(id: 'p1', brandName: 'نمونه', logoUrl: ''),
+            const BrandItem(id: 'p2', brandName: 'نمونه', logoUrl: ''),
+            const BrandItem(id: 'p3', brandName: 'نمونه', logoUrl: ''),
+            const BrandItem(id: 'p4', brandName: 'نمونه', logoUrl: ''),
+          ]
+        : widget.brands;
+
+    return SizedBox(
+      height: 66,
+      child: ListView.separated(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length * 4,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final item = items[index % items.length];
+          return _BrandLogoCard(item: item);
+        },
+      ),
+    );
+  }
+}
+
+class _BrandLogoCard extends StatelessWidget {
+  const _BrandLogoCard({required this.item});
+
+  final BrandItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 145,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      alignment: Alignment.center,
+      child: item.logoUrl.isNotEmpty
+          ? Image.network(
+              item.logoUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Text(
+                item.brandName,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            )
+          : Text(
+              item.brandName,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+    );
+  }
+}
 
 class _TestimonialCard extends StatelessWidget {
   const _TestimonialCard({required this.item});

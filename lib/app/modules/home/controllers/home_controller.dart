@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../data/models/billboard_item.dart';
 import '../../../data/models/billboard_map_item.dart';
+import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
 
@@ -17,6 +18,7 @@ class HomeController extends GetxController {
       'https://tablo.ir/my_api/billboards/list.php?limit=5';
   static const _testimonialsApi =
       'https://tablo.ir/my_api/testimonials/list.php';
+  static const _brandsApi = 'https://tablo.ir/my_api/brands/get.php';
 
   final menuItems = const <String>[
     'صفحه اصلی',
@@ -41,6 +43,10 @@ class HomeController extends GetxController {
   final testimonials = <TestimonialItem>[].obs;
   final testimonialsError = ''.obs;
 
+  final isLoadingBrands = false.obs;
+  final brands = <BrandItem>[].obs;
+  final brandsError = ''.obs;
+
   List<BillboardMapItem> get billboardsWithLocation =>
       billboards.where((item) => item.hasValidLocation).toList();
 
@@ -51,6 +57,7 @@ class HomeController extends GetxController {
     fetchBillboardsMap();
     fetchPartyBillboards();
     fetchTestimonials();
+    fetchBrands();
   }
 
   Future<void> fetchProvinces() async {
@@ -190,6 +197,43 @@ class HomeController extends GetxController {
       testimonialsError.value = 'اتصال به سرور نظرات برقرار نشد.';
     } finally {
       isLoadingTestimonials.value = false;
+    }
+  }
+
+
+  Future<void> fetchBrands() async {
+    isLoadingBrands.value = true;
+    brandsError.value = '';
+
+    try {
+      final response = await http
+          .get(Uri.parse(_brandsApi))
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        brandsError.value = 'خطا در دریافت برندها.';
+        return;
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final success = decoded['success'] == true;
+      final items = decoded['items'];
+
+      if (!success || items is! List) {
+        brandsError.value = 'پاسخ API برندها معتبر نیست.';
+        return;
+      }
+
+      brands.assignAll(
+        items
+            .whereType<Map<String, dynamic>>()
+            .map(BrandItem.fromJson)
+            .toList(),
+      );
+    } catch (_) {
+      brandsError.value = 'اتصال به سرور برندها برقرار نشد.';
+    } finally {
+      isLoadingBrands.value = false;
     }
   }
 
