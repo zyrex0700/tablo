@@ -4,12 +4,18 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../data/models/billboard_item.dart';
 import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/province_model.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
+
+  static const _mainBannerUrl =
+      'http://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
+  static const _partyBannerUrl =
+      'http://tablo.ir/my_api/images/tablo-party.png';
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +96,68 @@ class HomeView extends GetView<HomeController> {
                     onPressed: () {},
                     child: const Text('مشاهده تابلوها'),
                   ),
+                  const SizedBox(height: 28),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: AspectRatio(
+                      aspectRatio: 3.6,
+                      child: Image.network(
+                        _mainBannerUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const DecoratedBox(
+                          decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                          child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 34),
+                  Text(
+                    'تابلو پارتی',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(() {
+                    if (controller.isLoadingPartyBillboards.value) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    if (controller.partyBillboardsError.value.isNotEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Text(controller.partyBillboardsError.value),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 250,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: controller.partyBillboards.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            return _PartyBannerCard(imageUrl: _partyBannerUrl);
+                          }
+
+                          final item = controller.partyBillboards[index - 1];
+                          return _PartyBillboardCard(item: item);
+                        },
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 38),
                   Text(
                     'محبوب ترین مناطق',
@@ -177,6 +245,88 @@ class HomeView extends GetView<HomeController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PartyBannerCard extends StatelessWidget {
+  const _PartyBannerCard({required this.imageUrl});
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 300,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const DecoratedBox(
+          decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+          child: Center(child: Text('خطا در بارگذاری بنر تابلو پارتی')),
+        ),
+      ),
+    );
+  }
+}
+
+class _PartyBillboardCard extends StatelessWidget {
+  const _PartyBillboardCard({required this.item});
+
+  final BillboardItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 280,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Image.network(
+              item.imageUrl,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const DecoratedBox(
+                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.type,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text('${item.city} | ${item.area}'),
+                const SizedBox(height: 4),
+                Text('ابعاد: ${item.dimensionLabel}'),
+                const SizedBox(height: 4),
+                Text('کد تابلو: ${item.code}'),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
