@@ -17,7 +17,11 @@ class TabloApp extends StatelessWidget {
       initialRoute: AppRoutes.home,
       getPages: AppPages.routes,
       locale: const Locale('fa', 'IR'),
-      fallbackLocale: const Locale('en', 'US'),
+      fallbackLocale: const Locale('fa', 'IR'),
+      builder: (context, child) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 }
