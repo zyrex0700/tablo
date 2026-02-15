@@ -31,6 +31,12 @@ class BillboardsView extends GetView<BillboardsController> {
                         return Center(child: Text(controller.error.value));
                       }
 
+                      if (controller.billboards.isEmpty) {
+                        return const Center(
+                          child: Text('موردی مطابق فیلترها پیدا نشد.'),
+                        );
+                      }
+
                       return GridView.builder(
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
@@ -83,7 +89,8 @@ class _StatsBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           _StatChip(
-            label: 'تعداد شهرها: ${controller.billboards.map((e) => e.city).toSet().length}',
+            label:
+                'تعداد شهرها: ${controller.billboards.map((e) => e.city).toSet().length}',
             color: const Color(0xFFFFEDD5),
           ),
         ],
@@ -111,66 +118,215 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-class _FilterPanel extends StatelessWidget {
+class _FilterPanel extends StatefulWidget {
   const _FilterPanel({required this.controller});
 
   final BillboardsController controller;
 
   @override
+  State<_FilterPanel> createState() => _FilterPanelState();
+}
+
+class _FilterPanelState extends State<_FilterPanel> {
+  bool _priceExpanded = false;
+  bool _provinceExpanded = false;
+  bool _cityExpanded = false;
+  bool _quickSearchExpanded = true;
+
+  @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xFFF2F2F2),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('فیلتر بر اساس استان', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Obx(
-            () => DropdownButtonFormField<String>(
-              value: controller.selectedProvinceId.value.isEmpty
-                  ? null
-                  : controller.selectedProvinceId.value,
-              items: [
-                const DropdownMenuItem<String>(
-                  value: '',
-                  child: Text('همه استان‌ها'),
+      child: Obx(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _FilterAccordion(
+              title: 'فیلتر بر اساس قیمت :',
+              expanded: _priceExpanded,
+              onToggle: () => setState(() => _priceExpanded = !_priceExpanded),
+              child: DropdownButtonFormField<PriceFilter>(
+                value: controller.selectedPriceFilter.value,
+                items: PriceFilter.values
+                    .map(
+                      (price) => DropdownMenuItem<PriceFilter>(
+                        value: price,
+                        child: Text(price.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: controller.applyPriceFilter,
+                decoration: const InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                ...controller.provinces.map(
-                  (p) => DropdownMenuItem<String>(
-                    value: p.id,
-                    child: Text(p.name),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _FilterAccordion(
+              title: 'فیلتر بر اساس استان :',
+              expanded: _provinceExpanded,
+              onToggle: () => setState(() => _provinceExpanded = !_provinceExpanded),
+              child: DropdownButtonFormField<String>(
+                value: controller.selectedProvinceId.value.isEmpty
+                    ? ''
+                    : controller.selectedProvinceId.value,
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: '',
+                    child: Text('همه استان‌ها'),
+                  ),
+                  ...controller.provinces.map(
+                    (p) => DropdownMenuItem<String>(
+                      value: p.id,
+                      child: Text(p.name),
+                    ),
+                  ),
+                ],
+                onChanged: controller.applyProvinceFilter,
+                decoration: const InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _FilterAccordion(
+              title: 'فیلتر بر اساس شهر :',
+              expanded: _cityExpanded,
+              onToggle: () => setState(() => _cityExpanded = !_cityExpanded),
+              child: DropdownButtonFormField<String>(
+                value: controller.selectedCity.value,
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: '',
+                    child: Text('همه شهرها'),
+                  ),
+                  ...controller.cityOptions.map(
+                    (city) => DropdownMenuItem<String>(
+                      value: city,
+                      child: Text(city),
+                    ),
+                  ),
+                ],
+                onChanged: controller.applyCityFilter,
+                decoration: const InputDecoration(
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _FilterAccordion(
+              title: 'جستجوی سریع',
+              expanded: _quickSearchExpanded,
+              onToggle: () =>
+                  setState(() => _quickSearchExpanded = !_quickSearchExpanded),
+              iconColor: const Color(0xFF2B38D2),
+              child: TextField(
+                controller: controller.quickSearchController,
+                onChanged: controller.applyQuickSearch,
+                decoration: InputDecoration(
+                  hintText: 'نام شهر، کد تابلو، منطقه ...',
+                  suffixIcon: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2B38D2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.search, color: Colors.white),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: Color(0xFF9CA3AF)),
                   ),
                 ),
-              ],
-              onChanged: controller.applyProvinceFilter,
-              decoration: const InputDecoration(
-                hintText: 'انتخاب استان',
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: controller.clearFilters,
+              icon: const Icon(Icons.refresh),
+              label: const Text('حذف همه فیلترها'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF2544FF),
+                side: const BorderSide(color: Color(0xFFC7C7C7)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterAccordion extends StatelessWidget {
+  const _FilterAccordion({
+    required this.title,
+    required this.expanded,
+    required this.onToggle,
+    required this.child,
+    this.iconColor = const Color(0xFF9CA3AF),
+  });
+
+  final String title;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final Widget child;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3E6E8),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    color: iconColor,
+                  ),
+                  const Spacer(),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text('فیلتر بر اساس شهر', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          TextField(
-            onSubmitted: controller.applyCityFilter,
-            decoration: const InputDecoration(
-              hintText: 'مثلاً تهران',
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () {
-              controller.selectedProvinceId.value = '';
-              controller.selectedCity.value = '';
-              controller.fetchBillboards();
-            },
-            child: const Text('حذف فیلترها'),
-          ),
+          if (expanded) ...[
+            const SizedBox(height: 8),
+            child,
+          ],
         ],
       ),
     );
