@@ -20,3 +20,6 @@
 
 ## نکته امنیتی
 فایل `otp_store.json` صرفاً نمونه‌ی ساده است. برای production بهتر است OTP در Redis/Database با rate-limit و attempt-limit ذخیره شود.
+
+
+> نکته: در نسخه فعلی، مقادیر IPPanel به‌صورت پیش‌فرض داخل `SmsService.php` هم قرار داده شده‌اند تا خطای ارسال کد به‌خاطر ENV خالی رخ ندهد. در محیط production بهتر است این مقادیر فقط از ENV خوانده شوند.

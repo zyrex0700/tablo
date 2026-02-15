@@ -6,9 +6,13 @@ class SmsService
 {
     private static string $baseUrl = 'https://edge.ippanel.com/v1';
 
-    // بهتر است از ENV خوانده شود و مستقیم داخل کد قرار نگیرد.
-    private static string $authToken = '';
+    // 🔑 توکن IPPanel
+    private static string $authToken = 'OWY5NzM0NGQtMDIwYy00ZDNmLWJmODYtOGEzMDRhZDhkNDZmMjg5YmUxY2ZhZTFmNzNkMjNlZTM4MDczYzlhMjk5MjQ=';
+
+    // 📞 خط ارسال‌کننده
     private static string $fromNumber = '+983000505';
+
+    // 🧩 کد الگو
     private static string $patternCode = 'izuomd5dooahad5';
 
     public static function setConfig(?string $authToken = null, ?string $fromNumber = null, ?string $patternCode = null): void
@@ -44,13 +48,6 @@ class SmsService
     public static function sendOtp(string $phone, string $code): array
     {
         self::setConfig();
-
-        if (self::$authToken === '') {
-            return [
-                'success' => false,
-                'message' => 'توکن IPPanel تنظیم نشده است.',
-            ];
-        }
 
         $to = self::normalizePhone($phone);
 
