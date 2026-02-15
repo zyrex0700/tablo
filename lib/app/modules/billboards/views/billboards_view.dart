@@ -2,6 +2,7 @@ import '../../../data/models/billboard_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../routes/app_routes.dart';
 import '../../../widgets/app_page_scaffold.dart';
 import '../controllers/billboards_controller.dart';
 
@@ -48,7 +49,13 @@ class BillboardsView extends GetView<BillboardsController> {
                         itemCount: controller.billboards.length,
                         itemBuilder: (context, index) {
                           final item = controller.billboards[index];
-                          return _BillboardGridCard(item: item);
+                          return _BillboardGridCard(
+                            item: item,
+                            onTap: () => Get.toNamed(
+                              '${AppRoutes.billboardDetail}/${item.id}',
+                              arguments: item,
+                            ),
+                          );
                         },
                       );
                     }),
@@ -334,56 +341,61 @@ class _FilterAccordion extends StatelessWidget {
 }
 
 class _BillboardGridCard extends StatelessWidget {
-  const _BillboardGridCard({required this.item});
+  const _BillboardGridCard({required this.item, required this.onTap});
 
   final BillboardItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 250,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 175,
-            child: Image.network(
-              item.imageUrl,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        width: 250,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 175,
+              child: Image.network(
+                item.imageUrl,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const DecoratedBox(
+                  decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                  child: Center(child: Icon(Icons.image_not_supported_outlined)),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.type,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.type,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text('${item.city} | ${item.area}'),
-                const SizedBox(height: 4),
-                Text('ابعاد: ${item.dimensionLabel}'),
-                const SizedBox(height: 4),
-                Text('کد تابلو: ${item.code}'),
-              ],
+                  const SizedBox(height: 4),
+                  Text('${item.city} | ${item.area}'),
+                  const SizedBox(height: 4),
+                  Text('ابعاد: ${item.dimensionLabel}'),
+                  const SizedBox(height: 4),
+                  Text('کد تابلو: ${item.code}'),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

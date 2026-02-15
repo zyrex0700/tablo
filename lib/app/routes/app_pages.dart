@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../bindings/billboards_binding.dart';
 import '../bindings/home_binding.dart';
+import '../modules/billboards/views/billboard_detail_view.dart';
 import '../modules/billboards/views/billboards_view.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/home/views/simple_page_view.dart';
@@ -18,6 +19,10 @@ class AppPages {
       name: AppRoutes.billboards,
       page: () => const BillboardsView(),
       binding: BillboardsBinding(),
+    ),
+    GetPage(
+      name: '${AppRoutes.billboardDetail}/:id',
+      page: () => const BillboardDetailView(),
     ),
     GetPage(
       name: AppRoutes.magazine,

@@ -11,6 +11,11 @@ class BillboardItem {
     required this.code,
     required this.type,
     required this.monthlyRent,
+    required this.view,
+    required this.lighting,
+    required this.phone,
+    required this.latitude,
+    required this.longitude,
   });
 
   final String id;
@@ -24,10 +29,21 @@ class BillboardItem {
   final String code;
   final String type;
   final String monthlyRent;
+  final String view;
+  final String lighting;
+  final String phone;
+  final String latitude;
+  final String longitude;
 
   String get dimensionLabel => '${length}×${height}';
 
-  String get rentLabel => '${monthlyRent.isEmpty ? '1' : monthlyRent} تومان / ماه';
+  String get rentLabel => '${monthlyRent.isEmpty ? '1' : monthlyRent} تومان';
+
+  bool get hasValidLocation {
+    final lat = double.tryParse(latitude) ?? 0;
+    final lon = double.tryParse(longitude) ?? 0;
+    return lat != 0 && lon != 0;
+  }
 
   factory BillboardItem.fromJson(Map<String, dynamic> json) {
     return BillboardItem(
@@ -42,6 +58,11 @@ class BillboardItem {
       code: json['code']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
       monthlyRent: json['monthly_rent']?.toString() ?? '',
+      view: json['view']?.toString() ?? '',
+      lighting: json['lighting']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      latitude: json['latitude']?.toString() ?? '',
+      longitude: json['longitude']?.toString() ?? '',
     );
   }
 }
