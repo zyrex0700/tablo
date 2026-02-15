@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 import '../routes/app_routes.dart';
 
@@ -103,10 +107,14 @@ class _AuthDialogState extends State<_AuthDialog> {
   final _otpController = TextEditingController();
 
   bool _isLoading = false;
+  String _errorMessage = '';
   _AuthStep _step = _AuthStep.mobile;
+  Timer? _resendTimer;
+  int _secondsToResend = 118;
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _mobileController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -225,18 +233,37 @@ class _AuthDialogState extends State<_AuthDialog> {
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => setState(() => _step = _AuthStep.mobile),
+                onPressed: () {
+                  _otpController.clear();
+                  setState(() {
+                    _errorMessage = '';
+                    _step = _AuthStep.mobile;
+                  });
+                },
                 child: const Text('ویرایش شماره موبایل'),
               ),
-              const Text(
-                'ارسال مجدد کد تا ۰۱:۵۸',
-                style: TextStyle(color: Color(0xFFA2A7AE), fontSize: 15),
+              TextButton(
+                onPressed: _secondsToResend == 0 && !_isLoading ? _resendOtp : null,
+                child: Text(
+                  _secondsToResend == 0
+                      ? 'ارسال مجدد کد'
+                      : 'ارسال مجدد کد تا ${_formatTime(_secondsToResend)}',
+                  style: const TextStyle(fontSize: 15),
+                ),
               ),
               const SizedBox(height: 12),
               _AuthButton(
                 text: 'ادامه',
                 loading: _isLoading,
                 onPressed: _submitOtp,
+              ),
+            ],
+            if (_errorMessage.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12),
               ),
             ],
           ],
@@ -246,33 +273,194 @@ class _AuthDialogState extends State<_AuthDialog> {
   }
 
   Future<void> _submitMobile() async {
-    if (_mobileController.text.trim().length < 11) {
+    final mobile = _mobileController.text.trim();
+    if (!_isValidIranMobile(mobile)) {
+      setState(() => _errorMessage = 'شماره موبایل معتبر وارد کنید.');
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _step = _AuthStep.otp;
-      });
+    final result = await _AuthApi.sendOtp(mobile);
+
+    if (!mounted) {
+      return;
     }
+
+    setState(() {
+      _isLoading = false;
+      if (result.success) {
+        _step = _AuthStep.otp;
+        _secondsToResend = 118;
+        _startResendTimer();
+      } else {
+        _errorMessage = result.message;
+      }
+    });
   }
 
   Future<void> _submitOtp() async {
-    if (_otpController.text.trim().length < 4) {
+    final otp = _otpController.text.trim();
+    if (otp.length < 4) {
+      setState(() => _errorMessage = 'کد تایید معتبر وارد کنید.');
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-    if (mounted) {
+    final result = await _AuthApi.verifyOtp(
+      _mobileController.text.trim(),
+      otp,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _isLoading = false);
+
+    if (result.success) {
+      _resendTimer?.cancel();
       Get.back();
+      Get.snackbar(
+        'ورود موفق',
+        'با موفقیت وارد شدید.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    setState(() => _errorMessage = result.message);
+  }
+
+  Future<void> _resendOtp() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    final result = await _AuthApi.sendOtp(_mobileController.text.trim());
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = false;
+      if (result.success) {
+        _secondsToResend = 118;
+        _startResendTimer();
+      } else {
+        _errorMessage = result.message;
+      }
+    });
+  }
+
+  void _startResendTimer() {
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_secondsToResend == 0) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() => _secondsToResend -= 1);
+    });
+  }
+
+  bool _isValidIranMobile(String mobile) {
+    return RegExp(r'^09\d{9}$').hasMatch(mobile);
+  }
+
+  String _formatTime(int seconds) {
+    final min = (seconds ~/ 60).toString().padLeft(2, '0');
+    final sec = (seconds % 60).toString().padLeft(2, '0');
+    return '$min:$sec';
+  }
+}
+
+class _AuthApi {
+  static const _sendOtpApi = 'https://tablo.ir/my_api/auth/send_otp.php';
+  static const _verifyOtpApi = 'https://tablo.ir/my_api/auth/verify_otp.php';
+
+  static Future<_AuthResult> sendOtp(String mobile) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_sendOtpApi),
+        body: {'mobile': mobile},
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        return const _AuthResult(false, 'خطا در ارسال کد تایید.');
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return const _AuthResult(false, 'پاسخ سرویس نامعتبر است.');
+      }
+
+      final success = decoded['success'] == true;
+      final message = decoded['message']?.toString();
+
+      if (!success) {
+        return _AuthResult(false, message ?? 'ارسال کد ناموفق بود.');
+      }
+
+      return _AuthResult(true, message ?? 'کد تایید ارسال شد.');
+    } catch (_) {
+      return const _AuthResult(false, 'اتصال به سرویس OTP برقرار نشد.');
     }
   }
+
+  static Future<_AuthResult> verifyOtp(String mobile, String otp) async {
+    try {
+      final response = await http.post(
+        Uri.parse(_verifyOtpApi),
+        body: {
+          'mobile': mobile,
+          'otp': otp,
+        },
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        return const _AuthResult(false, 'خطا در تایید کد.');
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return const _AuthResult(false, 'پاسخ سرویس نامعتبر است.');
+      }
+
+      final success = decoded['success'] == true;
+      final message = decoded['message']?.toString();
+
+      if (!success) {
+        return _AuthResult(false, message ?? 'کد تایید صحیح نیست.');
+      }
+
+      return _AuthResult(true, message ?? 'ورود با موفقیت انجام شد.');
+    } catch (_) {
+      return const _AuthResult(false, 'اتصال به سرویس OTP برقرار نشد.');
+    }
+  }
+}
+
+class _AuthResult {
+  const _AuthResult(this.success, this.message);
+
+  final bool success;
+  final String message;
 }
 
 class _AuthButton extends StatelessWidget {
