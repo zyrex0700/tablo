@@ -118,7 +118,7 @@ class _AuthDialogState extends State<_AuthDialog> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
+        constraints: const BoxConstraints(maxWidth: 450),
         decoration: BoxDecoration(
           color: const Color(0xFFFBFBFC),
           borderRadius: BorderRadius.circular(24),
@@ -134,7 +134,7 @@ class _AuthDialogState extends State<_AuthDialog> {
                   style: TextStyle(
                     color: Color(0xFF1F3FE0),
                     fontWeight: FontWeight.bold,
-                    fontSize: 38,
+                    fontSize: 20,
                   ),
                 ),
                 const Spacer(),
@@ -148,12 +148,12 @@ class _AuthDialogState extends State<_AuthDialog> {
             if (_step == _AuthStep.mobile) ...[
               const Text(
                 'ورود / عضویت',
-                style: TextStyle(fontSize: 40, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               const Text(
                 'موبایل خود را وارد کنید',
-                style: TextStyle(color: Color(0xFF9AA0A8), fontSize: 28),
+                style: TextStyle(color: Color(0xFF9AA0A8), fontSize: 15),
               ),
               const SizedBox(height: 18),
               TextField(
@@ -187,19 +187,19 @@ class _AuthDialogState extends State<_AuthDialog> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFFA2A7AE),
-                  fontSize: 20,
+                  fontSize: 12,
                   height: 1.5,
                 ),
               ),
             ] else ...[
               const Text(
                 'کد تایید را وارد کنید',
-                style: TextStyle(fontSize: 38, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 10),
               Text(
                 'کد تایید برای شماره ${_mobileController.text} ارسال شد.',
-                style: const TextStyle(color: Color(0xFF9AA0A8), fontSize: 24),
+                style: const TextStyle(color: Color(0xFF9AA0A8), fontSize: 15),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -208,17 +208,18 @@ class _AuthDialogState extends State<_AuthDialog> {
                 maxLength: 6,
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 30, letterSpacing: 8),
-                decoration: InputDecoration(
+                style: const TextStyle(fontSize: 15, letterSpacing: 8),
+                decoration: const InputDecoration(
                   hintText: '● ● ● ● ● ●',
+                  hintStyle: TextStyle(color: Colors.grey),
                   counterText: '',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(color: Color(0xFF6F7380)),
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    borderSide: BorderSide(color: Color(0xFF6F7380)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(color: Color(0xFF6F7380)),
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    borderSide: BorderSide(color: Color(0xFF6F7380)),
                   ),
                 ),
               ),
@@ -229,7 +230,7 @@ class _AuthDialogState extends State<_AuthDialog> {
               ),
               const Text(
                 'ارسال مجدد کد تا ۰۱:۵۸',
-                style: TextStyle(color: Color(0xFFA2A7AE), fontSize: 18),
+                style: TextStyle(color: Color(0xFFA2A7AE), fontSize: 15),
               ),
               const SizedBox(height: 12),
               _AuthButton(
@@ -289,7 +290,7 @@ class _AuthButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 64,
+      height: 50,
       child: FilledButton(
         onPressed: loading ? null : onPressed,
         style: FilledButton.styleFrom(
@@ -310,7 +311,7 @@ class _AuthButton extends StatelessWidget {
               )
             : Text(
                 text,
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
       ),
     );
