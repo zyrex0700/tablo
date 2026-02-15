@@ -2,7 +2,7 @@ import '../../../data/models/billboard_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../routes/app_routes.dart';
+import 'billboard_detail_view.dart';
 import '../../../widgets/app_page_scaffold.dart';
 import '../controllers/billboards_controller.dart';
 
@@ -51,8 +51,8 @@ class BillboardsView extends GetView<BillboardsController> {
                           final item = controller.billboards[index];
                           return _BillboardGridCard(
                             item: item,
-                            onTap: () => Get.toNamed(
-                              '${AppRoutes.billboardDetail}/${item.id}',
+                            onTap: () => Get.to(
+                              () => const BillboardDetailView(),
                               arguments: item,
                             ),
                           );
