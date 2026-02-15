@@ -8,7 +8,6 @@ import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
-import '../../../routes/app_routes.dart';
 
 class HomeController extends GetxController {
   static const _provincesApi =
@@ -20,13 +19,6 @@ class HomeController extends GetxController {
   static const _testimonialsApi =
       'https://tablo.ir/my_api/testimonials/list.php';
   static const _brandsApi = 'https://tablo.ir/my_api/brands/get.php';
-
-  final menuItems = const <MenuItem>[
-    MenuItem(title: 'صفحه اصلی', route: AppRoutes.home),
-    MenuItem(title: 'تابلوها', route: AppRoutes.billboards),
-    MenuItem(title: 'مجله', route: AppRoutes.magazine),
-    MenuItem(title: 'تماس با ما', route: AppRoutes.contactUs),
-  ];
 
   final isLoadingProvinces = false.obs;
   final provinces = <ProvinceModel>[].obs;
@@ -238,14 +230,4 @@ class HomeController extends GetxController {
     }
   }
 
-}
-
-class MenuItem {
-  const MenuItem({
-    required this.title,
-    required this.route,
-  });
-
-  final String title;
-  final String route;
 }

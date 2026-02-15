@@ -2,6 +2,7 @@ import '../../../data/models/billboard_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../widgets/app_page_scaffold.dart';
 import '../controllers/billboards_controller.dart';
 
 class BillboardsView extends GetView<BillboardsController> {
@@ -9,8 +10,8 @@ class BillboardsView extends GetView<BillboardsController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
+    return AppPageScaffold(
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

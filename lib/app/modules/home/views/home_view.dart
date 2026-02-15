@@ -11,6 +11,7 @@ import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
+import '../../../widgets/app_page_scaffold.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -24,69 +25,13 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                borderRadius: BorderRadius.all(Radius.circular(15)),
-              ),
-              child: Row(
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('ورود / ثبت نام'),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      ...controller.menuItems.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(left: 18),
-                          child: TextButton(
-                            onPressed: () {
-                              if (Get.currentRoute != item.route) {
-                                Get.toNamed(item.route);
-                              }
-                            },
-                            child: Text(item.title),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'T',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(32, 15, 32, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+    return AppPageScaffold(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(32, 15, 32, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                   Obx(() {
                     if (controller.isLoadingBillboards.value) {
                       return const Center(
@@ -324,10 +269,8 @@ class HomeView extends GetView<HomeController> {
                     );
                   }),
                   const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
