@@ -34,7 +34,7 @@ class BillboardsView extends GetView<BillboardsController> {
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 5,
-                          childAspectRatio: 0.72,
+                          childAspectRatio: 0.92,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                         ),
@@ -184,6 +184,7 @@ class _BillboardGridCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 250,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -194,39 +195,34 @@ class _BillboardGridCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 140,
-            width: double.infinity,
+            height: 175,
             child: Image.network(
               item.imageUrl,
+              width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => const DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
+                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
                 child: Center(child: Icon(Icons.image_not_supported_outlined)),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${item.city} - ${item.area}',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                Text('استان: ${item.provinceName}'),
-                Text('کد تابلو: ${item.code}'),
-                const SizedBox(height: 6),
-                Text(
-                  item.rentLabel,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+                  item.type,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text('${item.city} | ${item.area}'),
+                const SizedBox(height: 4),
+                Text('ابعاد: ${item.dimensionLabel}'),
+                const SizedBox(height: 4),
+                Text('کد تابلو: ${item.code}'),
               ],
             ),
           ),

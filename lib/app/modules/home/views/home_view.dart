@@ -161,7 +161,7 @@ class HomeView extends GetView<HomeController> {
                     borderRadius: BorderRadius.circular(15),
                     child: Image.network(
                       _mainBannerUrl,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fitHeight,
                       errorBuilder: (_, __, ___) => const DecoratedBox(
                         decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
                         child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
