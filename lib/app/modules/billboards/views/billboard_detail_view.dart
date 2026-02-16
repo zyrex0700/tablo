@@ -28,14 +28,18 @@ class BillboardDetailView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
           child: Column(
             children: [
-              Text(
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
                 '${item.city} - ${item.code}',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
+              ),
               const SizedBox(height: 26),
               Row(
+                textDirection: TextDirection.rtl,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
@@ -82,6 +86,7 @@ class _DetailSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _BlueHeaderBox(text: 'کد تابلو:${item.code}'),
         const SizedBox(height: 12),
@@ -161,15 +166,17 @@ class _InfoItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
+        textDirection: TextDirection.rtl,
         children: [
-          const Icon(Icons.chevron_left, color: Color(0xFF8492A6)),
-          const SizedBox(width: 8),
           Expanded(
             child: Text(
               '$label: $value',
+              textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 16),
             ),
           ),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_left, color: Color(0xFF8492A6)),
         ],
       ),
     );

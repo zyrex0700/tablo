@@ -15,6 +15,7 @@ class BillboardsView extends GetView<BillboardsController> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
         child: Row(
+          textDirection: TextDirection.rtl,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
@@ -84,6 +85,7 @@ class _StatsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => Row(
+        textDirection: TextDirection.rtl,
         children: [
           _StatChip(
             label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
