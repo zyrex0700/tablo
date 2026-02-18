@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 import '../routes/app_routes.dart';
 
@@ -84,7 +87,8 @@ class _AppHeaderState extends State<AppHeader> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
                 child: const Text('ورود / ثبت نام'),
               );
@@ -98,11 +102,13 @@ class _AppHeaderState extends State<AppHeader> {
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2544FF),
-                    side: const BorderSide(color: Color(0xFF2544FF), width: 1.4),
+                    side:
+                        const BorderSide(color: Color(0xFF2544FF), width: 1.4),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                   ),
                   label: const Text(
                     'افزودن تابلو',
@@ -129,7 +135,8 @@ class _AppHeaderState extends State<AppHeader> {
                       child: Row(
                         textDirection: TextDirection.rtl,
                         children: const [
-                          Icon(Icons.power_settings_new, color: Color(0xFFEF4444)),
+                          Icon(Icons.power_settings_new,
+                              color: Color(0xFFEF4444)),
                           SizedBox(width: 10),
                           Text(
                             'خروج از حساب کاربری',
@@ -140,7 +147,8 @@ class _AppHeaderState extends State<AppHeader> {
                     ),
                   ],
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(24),
@@ -151,20 +159,31 @@ class _AppHeaderState extends State<AppHeader> {
                         const CircleAvatar(
                           radius: 14,
                           backgroundColor: Color(0xFFE7ECFF),
-                          child: Icon(Icons.person_outline, size: 17, color: Color(0xFF3A4BD7)),
+                          child: Icon(
+                            Icons.person_outline,
+                            size: 17,
+                            color: Color(0xFF3A4BD7),
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Text(
                           'حساب کاربری',
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                          style: theme.textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(width: 10),
                         Text(
                           _session.mobile.value,
-                          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                          style: const TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
+                        const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Color(0xFF6B7280),
+                        ),
                       ],
                     ),
                   ),
@@ -217,11 +236,15 @@ class _AuthDialog extends StatefulWidget {
 }
 
 class _AuthDialogState extends State<_AuthDialog> {
+  static const _sendOtpUrl = 'https://tablo.ir/my_api/auth/send_otp.php';
+  static const _verifyOtpUrl = 'https://tablo.ir/my_api/auth/verify_otp.php';
+
   final _mobileController = TextEditingController();
   final _otpController = TextEditingController();
 
   bool _isLoading = false;
   _AuthStep _step = _AuthStep.mobile;
+  String _error = '';
 
   @override
   void dispose() {
@@ -357,6 +380,13 @@ class _AuthDialogState extends State<_AuthDialog> {
                 onPressed: _submitOtp,
               ),
             ],
+            if (_error.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                _error,
+                style: const TextStyle(color: Color(0xFFE11D48), fontSize: 12),
+              ),
+            ],
           ],
         ),
       ),
@@ -364,39 +394,92 @@ class _AuthDialogState extends State<_AuthDialog> {
   }
 
   Future<void> _submitMobile() async {
-    if (_mobileController.text.trim().length < 11) {
+    final phone = _mobileController.text.trim();
+    if (!RegExp(r'^09\d{9}$').hasMatch(phone)) {
+      setState(() => _error = 'شماره موبایل معتبر نیست');
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-        _step = _AuthStep.otp;
-      });
+    try {
+      final response = await http
+          .post(
+            Uri.parse(_sendOtpUrl),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'phone': phone}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        setState(() => _error = 'پاسخ نامعتبر از سرور');
+        return;
+      }
+
+      if (decoded['success'] == true) {
+        setState(() => _step = _AuthStep.otp);
+      } else {
+        setState(() => _error = decoded['message']?.toString() ?? 'خطا در ارسال کد');
+      }
+    } catch (_) {
+      setState(() => _error = 'اتصال به سرور برقرار نشد');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _submitOtp() async {
-    if (_otpController.text.trim().length < 4) {
+    final phone = _mobileController.text.trim();
+    final code = _otpController.text.trim();
+
+    if (code.length < 4) {
+      setState(() => _error = 'کد تایید معتبر نیست');
       return;
     }
 
-    setState(() => _isLoading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
 
-    if (!mounted) {
-      return;
+    try {
+      final response = await http
+          .post(
+            Uri.parse(_verifyOtpUrl),
+            headers: const {'Content-Type': 'application/json'},
+            body: jsonEncode({'phone': phone, 'code': code}),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        setState(() => _error = 'پاسخ نامعتبر از سرور');
+        return;
+      }
+
+      if (decoded['success'] == true) {
+        final session = Get.isRegistered<_HeaderSession>()
+            ? Get.find<_HeaderSession>()
+            : Get.put(_HeaderSession(), permanent: true);
+
+        session.login(phone);
+        Get.back();
+      } else {
+        setState(() => _error = decoded['message']?.toString() ?? 'کد تایید اشتباه است');
+      }
+    } catch (_) {
+      setState(() => _error = 'اتصال به سرور برقرار نشد');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-
-    final session = Get.isRegistered<_HeaderSession>()
-        ? Get.find<_HeaderSession>()
-        : Get.put(_HeaderSession(), permanent: true);
-
-    session.login(_mobileController.text.trim());
-    Get.back();
   }
 }
 
