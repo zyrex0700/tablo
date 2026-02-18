@@ -9,18 +9,23 @@ import '../../../data/models/province_model.dart';
 
 class AddBillboardController extends GetxController {
   static const _provincesApi = 'https://tablo.ir/my_api/provinces/list.php';
+  static const _citiesApi = 'https://tablo.ir/my_api/cities/list.php';
   static const _addBillboardApi = 'https://tablo.ir/my_api/billboards/add.php';
 
   final provinces = <ProvinceModel>[].obs;
+  final cityOptions = <CityOption>[].obs;
+
   final isLoadingProvinces = false.obs;
+  final isLoadingCities = false.obs;
   final isSubmitting = false.obs;
 
-  final selectedProvinceId = RxnString();
+  final selectedProvinceIds = <String>[].obs;
+  final selectedCityNames = <String>[].obs;
+
   final selectedType = RxnString();
   final selectedLighting = RxnString();
 
   final codeController = TextEditingController();
-  final cityController = TextEditingController();
   final areaController = TextEditingController();
   final lengthController = TextEditingController();
   final heightController = TextEditingController();
@@ -53,7 +58,6 @@ class AddBillboardController extends GetxController {
   @override
   void onClose() {
     codeController.dispose();
-    cityController.dispose();
     areaController.dispose();
     lengthController.dispose();
     heightController.dispose();
@@ -94,10 +98,109 @@ class AddBillboardController extends GetxController {
         );
       }
     } catch (_) {
-      // intentionally ignored in UI (dropdown will stay empty)
+      // ignored, selection will remain empty
     } finally {
       isLoadingProvinces.value = false;
     }
+  }
+
+  Future<void> toggleProvinceSelection(String provinceId) async {
+    if (selectedProvinceIds.contains(provinceId)) {
+      selectedProvinceIds.remove(provinceId);
+    } else {
+      selectedProvinceIds.add(provinceId);
+    }
+
+    await fetchCitiesForSelectedProvinces();
+  }
+
+  void toggleCitySelection(String cityName) {
+    if (selectedCityNames.contains(cityName)) {
+      selectedCityNames.remove(cityName);
+      return;
+    }
+
+    selectedCityNames.add(cityName);
+  }
+
+  Future<void> fetchCitiesForSelectedProvinces() async {
+    if (selectedProvinceIds.isEmpty) {
+      cityOptions.clear();
+      selectedCityNames.clear();
+      return;
+    }
+
+    isLoadingCities.value = true;
+
+    try {
+      final futures = selectedProvinceIds.map((provinceId) async {
+        final uri = Uri.parse(_citiesApi).replace(
+          queryParameters: {'province_id': provinceId},
+        );
+
+        final response = await http.get(uri).timeout(const Duration(seconds: 15));
+        if (response.statusCode != 200) {
+          return <CityOption>[];
+        }
+
+        final decoded = _safeDecode(response.body);
+        if (decoded == null || decoded['success'] != true || decoded['data'] is! List) {
+          return <CityOption>[];
+        }
+
+        final data = decoded['data'] as List<dynamic>;
+
+        return data.whereType<Map<String, dynamic>>().map((json) {
+          return CityOption(
+            id: json['id']?.toString() ?? '',
+            provinceId: json['province_id']?.toString() ?? provinceId,
+            name: json['name']?.toString().trim() ?? '',
+          );
+        }).where((city) => city.name.isNotEmpty).toList();
+      }).toList();
+
+      final resultLists = await Future.wait(futures);
+      final merged = <String, CityOption>{};
+      for (final list in resultLists) {
+        for (final city in list) {
+          merged[city.name] = city;
+        }
+      }
+
+      final newOptions = merged.values.toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+      cityOptions.assignAll(newOptions);
+
+      selectedCityNames.removeWhere(
+        (selected) => !newOptions.any((city) => city.name == selected),
+      );
+    } catch (_) {
+      cityOptions.clear();
+      selectedCityNames.clear();
+    } finally {
+      isLoadingCities.value = false;
+    }
+  }
+
+  String get selectedProvincesLabel {
+    if (selectedProvinceIds.isEmpty) {
+      return 'استان‌ ها را انتخاب کنید';
+    }
+
+    final selectedNames = provinces
+        .where((province) => selectedProvinceIds.contains(province.id))
+        .map((province) => province.name)
+        .toList();
+
+    return selectedNames.join('، ');
+  }
+
+  String get selectedCitiesLabel {
+    if (selectedCityNames.isEmpty) {
+      return 'شهرها را انتخاب کنید';
+    }
+
+    return selectedCityNames.join('، ');
   }
 
   void setCoordinates(double latitude, double longitude) {
@@ -116,16 +219,16 @@ class AddBillboardController extends GetxController {
       return;
     }
 
-    if (selectedProvinceId.value == null ||
-        cityController.text.trim().isEmpty ||
+    if (selectedProvinceIds.isEmpty ||
+        selectedCityNames.isEmpty ||
         areaController.text.trim().isEmpty) {
       Get.snackbar('خطا', 'استان، شهر و محور الزامی هستند.');
       return;
     }
 
     final payload = <String, dynamic>{
-      'province_id': selectedProvinceId.value,
-      'city': cityController.text.trim(),
+      'province_id': selectedProvinceIds.join(','),
+      'city': selectedCityNames.join(','),
       'area': areaController.text.trim(),
       'height': _nullableNumber(heightController.text),
       'length': _nullableNumber(lengthController.text),
@@ -196,4 +299,16 @@ class AddBillboardController extends GetxController {
       return null;
     }
   }
+}
+
+class CityOption {
+  const CityOption({
+    required this.id,
+    required this.provinceId,
+    required this.name,
+  });
+
+  final String id;
+  final String provinceId;
+  final String name;
 }

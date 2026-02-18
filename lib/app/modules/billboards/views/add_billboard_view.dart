@@ -36,24 +36,26 @@ class AddBillboardView extends GetView<AddBillboardController> {
                   _inputField(controller.codeController, hint: 'کد تابلو'),
                   const SizedBox(height: 12),
                   Obx(
-                    () => _dropdownField(
-                      value: controller.selectedProvinceId.value,
-                      hint: controller.isLoadingProvinces.value
-                          ? 'در حال دریافت استان‌ها...'
-                          : 'استان (چند انتخابی)',
-                      items: controller.provinces
-                          .map(
-                            (province) => DropdownMenuItem<String>(
-                              value: province.id,
-                              child: Text(province.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) => controller.selectedProvinceId.value = value,
+                    () => _multiSelectField(
+                      label: 'استان (چند انتخابی)',
+                      valueText: controller.selectedProvincesLabel,
+                      onTap: () {
+                        _openProvincePicker(context);
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _inputField(controller.cityController, hint: 'شهرها (چند انتخابی)'),
+                  Obx(
+                    () => _multiSelectField(
+                      label: 'شهرها (چند انتخابی)',
+                      valueText: controller.isLoadingCities.value
+                          ? 'در حال دریافت شهرها...'
+                          : controller.selectedCitiesLabel,
+                      onTap: () {
+                        _openCityPicker(context);
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   _inputField(controller.areaController, hint: 'منطقه / محور'),
                   const SizedBox(height: 12),
@@ -223,6 +225,72 @@ class AddBillboardView extends GetView<AddBillboardController> {
     );
   }
 
+  Future<void> _openProvincePicker(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.7,
+          child: Obx(
+            () => _SelectionSheet(
+              title: 'انتخاب استان',
+              isLoading: controller.isLoadingProvinces.value,
+              options: controller.provinces
+                  .map((province) => _SelectionItem(
+                        id: province.id,
+                        title: province.name,
+                        selected:
+                            controller.selectedProvinceIds.contains(province.id),
+                      ))
+                  .toList(),
+              onToggle: (id) => controller.toggleProvinceSelection(id),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openCityPicker(BuildContext context) {
+    if (controller.selectedProvinceIds.isEmpty) {
+      Get.snackbar('توجه', 'ابتدا حداقل یک استان انتخاب کنید.');
+      return Future.value();
+    }
+
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.7,
+          child: Obx(
+            () => _SelectionSheet(
+              title: 'انتخاب شهر',
+              isLoading: controller.isLoadingCities.value,
+              options: controller.cityOptions
+                  .map(
+                    (city) => _SelectionItem(
+                      id: city.name,
+                      title: city.name,
+                      selected: controller.selectedCityNames.contains(city.name),
+                    ),
+                  )
+                  .toList(),
+              onToggle: controller.toggleCitySelection,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _inputField(
     TextEditingController controller, {
     required String hint,
@@ -280,6 +348,118 @@ class AddBillboardView extends GetView<AddBillboardController> {
       ),
     );
   }
+
+  Widget _multiSelectField({
+    required String label,
+    required String valueText,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: const Color(0xFFE9ECEF),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF8C93A3)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF8C93A3)),
+          ),
+          suffixIcon: const Icon(Icons.keyboard_arrow_down),
+        ),
+        child: Text(
+          valueText,
+          textAlign: TextAlign.right,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Color(0xFF374151)),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectionSheet extends StatelessWidget {
+  const _SelectionSheet({
+    required this.title,
+    required this.isLoading,
+    required this.options,
+    required this.onToggle,
+  });
+
+  final String title;
+  final bool isLoading;
+  final List<_SelectionItem> options;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.right,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 14),
+          if (isLoading)
+            const Expanded(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (options.isEmpty)
+            const Expanded(
+              child: Center(
+                child: Text('موردی برای انتخاب وجود ندارد'),
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.separated(
+                itemCount: options.length,
+                separatorBuilder: (_, __) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  final item = options[index];
+
+                  return CheckboxListTile(
+                    value: item.selected,
+                    onChanged: (_) => onToggle(item.id),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      item.title,
+                      textAlign: TextAlign.right,
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectionItem {
+  const _SelectionItem({
+    required this.id,
+    required this.title,
+    required this.selected,
+  });
+
+  final String id;
+  final String title;
+  final bool selected;
 }
 
 class _MapPicker extends StatefulWidget {
