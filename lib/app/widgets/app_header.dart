@@ -3,15 +3,24 @@ import 'package:get/get.dart';
 
 import '../routes/app_routes.dart';
 
-class AppHeader extends StatelessWidget {
+class AppHeader extends StatefulWidget {
   const AppHeader({super.key});
 
+  @override
+  State<AppHeader> createState() => _AppHeaderState();
+}
+
+class _AppHeaderState extends State<AppHeader> {
   static const _menuItems = <_MenuItem>[
     _MenuItem(title: 'صفحه اصلی', route: AppRoutes.home),
     _MenuItem(title: 'تابلوها', route: AppRoutes.billboards),
     _MenuItem(title: 'مجله', route: AppRoutes.magazine),
     _MenuItem(title: 'تماس با ما', route: AppRoutes.contactUs),
   ];
+
+  final _session = Get.isRegistered<_HeaderSession>()
+      ? Get.find<_HeaderSession>()
+      : Get.put(_HeaderSession(), permanent: true);
 
   @override
   Widget build(BuildContext context) {
@@ -65,21 +74,130 @@ class AppHeader extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          OutlinedButton(
-            onPressed: () => _showAuthDialog(context),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF2544FF),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            ),
-            child: const Text('ورود / ثبت نام'),
-          ),
+          Obx(() {
+            if (!_session.isLoggedIn.value) {
+              return OutlinedButton(
+                onPressed: () => _showAuthDialog(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF2544FF),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
+                child: const Text('ورود / ثبت نام'),
+              );
+            }
+
+            return Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Get.snackbar('افزودن تابلو', 'این بخش به‌زودی تکمیل می‌شود.');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2544FF),
+                    side: const BorderSide(color: Color(0xFF2544FF), width: 1.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  ),
+                  label: const Text(
+                    'افزودن تابلو',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  icon: const Icon(Icons.add, size: 20),
+                ),
+                const SizedBox(width: 12),
+                PopupMenuButton<String>(
+                  onSelected: _onAccountMenuSelected,
+                  position: PopupMenuPosition.under,
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  constraints: const BoxConstraints(minWidth: 250),
+                  itemBuilder: (context) => [
+                    _menuItem('dashboard', 'داشبورد', Icons.dashboard_outlined),
+                    _menuItem('myBoards', 'تابلوهای من', Icons.layers_outlined),
+                    _menuItem('profile', 'پروفایل', Icons.person_outline),
+                    const PopupMenuDivider(),
+                    PopupMenuItem<String>(
+                      value: 'logout',
+                      child: Row(
+                        textDirection: TextDirection.rtl,
+                        children: const [
+                          Icon(Icons.power_settings_new, color: Color(0xFFEF4444)),
+                          SizedBox(width: 10),
+                          Text(
+                            'خروج از حساب کاربری',
+                            style: TextStyle(color: Color(0xFFEF4444)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFD9E1EC)),
+                    ),
+                    child: Row(
+                      children: [
+                        const CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Color(0xFFE7ECFF),
+                          child: Icon(Icons.person_outline, size: 17, color: Color(0xFF3A4BD7)),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'حساب کاربری',
+                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _session.mobile.value,
+                          style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );
+  }
+
+  PopupMenuItem<String> _menuItem(String value, String title, IconData icon) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        textDirection: TextDirection.rtl,
+        children: [
+          Icon(icon, color: const Color(0xFF4B5563)),
+          const SizedBox(width: 10),
+          Text(title),
+        ],
+      ),
+    );
+  }
+
+  void _onAccountMenuSelected(String value) {
+    if (value == 'logout') {
+      _session.logout();
+      return;
+    }
+
+    Get.snackbar('حساب کاربری', 'بخش $value به‌زودی تکمیل می‌شود.');
   }
 
   void _showAuthDialog(BuildContext context) {
@@ -269,9 +387,16 @@ class _AuthDialogState extends State<_AuthDialog> {
     setState(() => _isLoading = true);
     await Future<void>.delayed(const Duration(milliseconds: 700));
 
-    if (mounted) {
-      Get.back();
+    if (!mounted) {
+      return;
     }
+
+    final session = Get.isRegistered<_HeaderSession>()
+        ? Get.find<_HeaderSession>()
+        : Get.put(_HeaderSession(), permanent: true);
+
+    session.login(_mobileController.text.trim());
+    Get.back();
   }
 }
 
@@ -319,6 +444,20 @@ class _AuthButton extends StatelessWidget {
 }
 
 enum _AuthStep { mobile, otp }
+
+class _HeaderSession extends GetxController {
+  final isLoggedIn = false.obs;
+  final mobile = '0912•••••••'.obs;
+
+  void login(String mobileNumber) {
+    mobile.value = mobileNumber;
+    isLoggedIn.value = true;
+  }
+
+  void logout() {
+    isLoggedIn.value = false;
+  }
+}
 
 class _MenuItem {
   const _MenuItem({required this.title, required this.route});
