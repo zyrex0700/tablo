@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 
+import '../bindings/add_billboard_binding.dart';
 import '../bindings/billboards_binding.dart';
 import '../bindings/home_binding.dart';
 import '../modules/billboards/views/billboard_detail_view.dart';
+import '../modules/billboards/views/add_billboard_view.dart';
 import '../modules/billboards/views/billboards_view.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/home/views/simple_page_view.dart';
@@ -23,6 +25,11 @@ class AppPages {
     GetPage(
       name: '${AppRoutes.billboardDetail}/:id',
       page: () => const BillboardDetailView(),
+    ),
+    GetPage(
+      name: AppRoutes.addBillboard,
+      page: () => const AddBillboardView(),
+      binding: AddBillboardBinding(),
     ),
     GetPage(
       name: AppRoutes.magazine,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
+import '../controllers/header_session.dart';
 import '../routes/app_routes.dart';
 
 class AppHeader extends StatefulWidget {
@@ -21,9 +22,9 @@ class _AppHeaderState extends State<AppHeader> {
     _MenuItem(title: 'تماس با ما', route: AppRoutes.contactUs),
   ];
 
-  final _session = Get.isRegistered<_HeaderSession>()
-      ? Get.find<_HeaderSession>()
-      : Get.put(_HeaderSession(), permanent: true);
+  final _session = Get.isRegistered<HeaderSession>()
+      ? Get.find<HeaderSession>()
+      : Get.put(HeaderSession(), permanent: true);
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +99,7 @@ class _AppHeaderState extends State<AppHeader> {
               children: [
                 OutlinedButton.icon(
                   onPressed: () {
-                    Get.snackbar('افزودن تابلو', 'این بخش به‌زودی تکمیل می‌شود.');
+                    Get.toNamed(AppRoutes.addBillboard);
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2544FF),
@@ -472,11 +473,14 @@ class _AuthDialogState extends State<_AuthDialog> {
       }
 
       if (response.statusCode == 200 && decoded['success'] == true) {
-        final session = Get.isRegistered<_HeaderSession>()
-            ? Get.find<_HeaderSession>()
-            : Get.put(_HeaderSession(), permanent: true);
+        final session = Get.isRegistered<HeaderSession>()
+            ? Get.find<HeaderSession>()
+            : Get.put(HeaderSession(), permanent: true);
 
-        session.login(phone);
+        session.login(
+          phone,
+          authToken: decoded['token']?.toString() ?? '',
+        );
         Get.back();
       } else {
         setState(() => _error = decoded['message']?.toString() ?? 'کد تایید اشتباه است');
@@ -579,20 +583,6 @@ class _AuthButton extends StatelessWidget {
 }
 
 enum _AuthStep { mobile, otp }
-
-class _HeaderSession extends GetxController {
-  final isLoggedIn = false.obs;
-  final mobile = '0912•••••••'.obs;
-
-  void login(String mobileNumber) {
-    mobile.value = mobileNumber;
-    isLoggedIn.value = true;
-  }
-
-  void logout() {
-    isLoggedIn.value = false;
-  }
-}
 
 class _MenuItem {
   const _MenuItem({required this.title, required this.route});
