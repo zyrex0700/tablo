@@ -384,7 +384,7 @@ class AddBillboardView extends GetView<AddBillboardController> {
   }
 }
 
-class _SelectionSheet extends StatelessWidget {
+class _SelectionSheet extends StatefulWidget {
   const _SelectionSheet({
     required this.title,
     required this.isLoading,
@@ -398,14 +398,34 @@ class _SelectionSheet extends StatelessWidget {
   final ValueChanged<String> onToggle;
 
   @override
+  State<_SelectionSheet> createState() => _SelectionSheetState();
+}
+
+class _SelectionSheetState extends State<_SelectionSheet> {
+  final _queryController = TextEditingController();
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final query = _queryController.text.trim();
+    final filteredOptions = query.isEmpty
+        ? widget.options
+        : widget.options
+            .where((item) => item.title.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            title,
+            widget.title,
             textAlign: TextAlign.right,
             style: Theme.of(context)
                 .textTheme
@@ -413,11 +433,28 @@ class _SelectionSheet extends StatelessWidget {
                 ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 14),
-          if (isLoading)
+          TextField(
+            controller: _queryController,
+            textAlign: TextAlign.right,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'جست‌وجو...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (widget.isLoading)
             const Expanded(
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (options.isEmpty)
+          else if (filteredOptions.isEmpty)
             const Expanded(
               child: Center(
                 child: Text('موردی برای انتخاب وجود ندارد'),
@@ -426,14 +463,14 @@ class _SelectionSheet extends StatelessWidget {
           else
             Expanded(
               child: ListView.separated(
-                itemCount: options.length,
+                itemCount: filteredOptions.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  final item = options[index];
+                  final item = filteredOptions[index];
 
                   return CheckboxListTile(
                     value: item.selected,
-                    onChanged: (_) => onToggle(item.id),
+                    onChanged: (_) => widget.onToggle(item.id),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                     title: Text(
