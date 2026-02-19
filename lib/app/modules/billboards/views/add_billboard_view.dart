@@ -150,8 +150,6 @@ class AddBillboardView extends GetView<AddBillboardController> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  _inputField(controller.sellerController, hint: 'فروشنده'),
                   const SizedBox(height: 16),
                   Text(
                     'تصویر تابلو',
@@ -161,26 +159,51 @@ class AddBillboardView extends GetView<AddBillboardController> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  _inputField(
-                    controller.imageUrlController,
-                    hint: 'لینک تصویر (اختیاری)',
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF8C93A3)),
+                  Obx(
+                    () => InkWell(
+                      onTap: controller.isPickingImage.value
+                          ? null
+                          : controller.pickImage,
                       borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'انتخاب و آپلود تصویر  ⬆',
-                        style: TextStyle(
-                          color: Color(0xFF3F4FA8),
-                          fontWeight: FontWeight.w500,
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF8C93A3)),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Center(
+                          child: controller.isPickingImage.value
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(
+                                  controller.selectedImageName.value.isEmpty
+                                      ? 'انتخاب و آپلود تصویر  ⬆'
+                                      : 'تصویر انتخاب شد: ${controller.selectedImageName.value}',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF3F4FA8),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 10),
+                  Obx(
+                    () => controller.selectedImageBytes.value == null
+                        ? const SizedBox.shrink()
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.memory(
+                              controller.selectedImageBytes.value!,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 20),
                   Obx(

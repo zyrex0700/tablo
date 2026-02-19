@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +19,7 @@ class AddBillboardController extends GetxController {
   final isLoadingProvinces = false.obs;
   final isLoadingCities = false.obs;
   final isSubmitting = false.obs;
+  final isPickingImage = false.obs;
 
   final selectedProvinceIds = <String>[].obs;
   final selectedCityNames = <String>[].obs;
@@ -34,8 +36,9 @@ class AddBillboardController extends GetxController {
   final phoneController = TextEditingController();
   final latitudeController = TextEditingController();
   final longitudeController = TextEditingController();
-  final sellerController = TextEditingController();
-  final imageUrlController = TextEditingController();
+
+  final selectedImageName = ''.obs;
+  final selectedImageBytes = Rxn<List<int>>();
 
   static const billboardTypes = <String>[
     'بیلبورد',
@@ -66,8 +69,6 @@ class AddBillboardController extends GetxController {
     phoneController.dispose();
     latitudeController.dispose();
     longitudeController.dispose();
-    sellerController.dispose();
-    imageUrlController.dispose();
     super.onClose();
   }
 
@@ -182,6 +183,31 @@ class AddBillboardController extends GetxController {
     }
   }
 
+  Future<void> pickImage() async {
+    isPickingImage.value = true;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.first;
+      if (file.bytes == null) {
+        return;
+      }
+
+      selectedImageName.value = file.name;
+      selectedImageBytes.value = file.bytes;
+    } finally {
+      isPickingImage.value = false;
+    }
+  }
+
   String get selectedProvincesLabel {
     if (selectedProvinceIds.isEmpty) {
       return 'استان‌ ها را انتخاب کنید';
@@ -226,6 +252,9 @@ class AddBillboardController extends GetxController {
       return;
     }
 
+    final userId = _extractUserIdFromToken(token);
+    final imageDataUrl = _buildImageDataUrl();
+
     final payload = <String, dynamic>{
       'province_id': selectedProvinceIds.join(','),
       'city': selectedCityNames.join(','),
@@ -238,10 +267,8 @@ class AddBillboardController extends GetxController {
       'phone': phoneController.text.trim(),
       'latitude': _nullableNumber(latitudeController.text),
       'longitude': _nullableNumber(longitudeController.text),
-      'seller': sellerController.text.trim(),
-      'image_url': imageUrlController.text.trim().isEmpty
-          ? null
-          : imageUrlController.text.trim(),
+      'seller': userId,
+      'image_url': imageDataUrl,
       'code': codeController.text.trim(),
       'type': selectedType.value ?? '',
     };
@@ -277,6 +304,45 @@ class AddBillboardController extends GetxController {
     } finally {
       isSubmitting.value = false;
     }
+  }
+
+  String _extractUserIdFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length < 2) {
+        return '';
+      }
+
+      final payloadPart = base64Url.normalize(parts[1]);
+      final payload = utf8.decode(base64Url.decode(payloadPart));
+      final decoded = jsonDecode(payload);
+      if (decoded is Map<String, dynamic>) {
+        final userId = decoded['user_id'];
+        return userId?.toString() ?? '';
+      }
+
+      return '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String? _buildImageDataUrl() {
+    final bytes = selectedImageBytes.value;
+    if (bytes == null || bytes.isEmpty) {
+      return null;
+    }
+
+    final extension = selectedImageName.value.split('.').last.toLowerCase();
+    final mime = switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      _ => 'image/jpeg',
+    };
+
+    final base64 = base64Encode(bytes);
+    return 'data:$mime;base64,$base64';
   }
 
   num? _nullableNumber(String input) {
