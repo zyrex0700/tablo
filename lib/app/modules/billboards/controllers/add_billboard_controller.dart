@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -188,9 +189,11 @@ class AddBillboardController extends GetxController {
     isPickingImage.value = true;
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
         allowMultiple: false,
         withData: true,
+        lockParentWindow: true,
       );
 
       if (result == null || result.files.isEmpty) {
@@ -204,6 +207,8 @@ class AddBillboardController extends GetxController {
 
       selectedImageName.value = file.name;
       selectedImageBytes.value = file.bytes;
+    } catch (e) {
+      Get.snackbar('خطا', 'انتخاب تصویر باز نشد. لطفاً Pop-up را در مرورگر اجازه دهید.');
     } finally {
       isPickingImage.value = false;
     }
@@ -289,7 +294,7 @@ class AddBillboardController extends GetxController {
 
       final decoded = _safeDecode(response.body);
       if (decoded == null) {
-        Get.snackbar('خطا', 'پاسخ نامعتبر از سرور دریافت شد.');
+        Get.snackbar('خطا', 'پاسخ نامعتبر از سرور (کد: ${response.statusCode})');
         return;
       }
 
@@ -300,8 +305,12 @@ class AddBillboardController extends GetxController {
       }
 
       Get.snackbar('خطا', decoded['message']?.toString() ?? 'ثبت تابلو ناموفق بود.');
-    } catch (_) {
-      Get.snackbar('خطا', 'اتصال به سرور برقرار نشد.');
+    } on TimeoutException {
+      Get.snackbar('خطا', 'زمان پاسخ‌گویی سرور تمام شد.');
+    } on http.ClientException {
+      Get.snackbar('خطا', 'اتصال وب به سرور برقرار نشد (احتمال CORS/SSL).');
+    } catch (e) {
+      Get.snackbar('خطا', 'خطا در ثبت تابلو: ${e.toString()}');
     } finally {
       isSubmitting.value = false;
     }
