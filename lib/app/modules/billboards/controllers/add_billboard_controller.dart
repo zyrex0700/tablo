@@ -310,7 +310,11 @@ class AddBillboardController extends GetxController {
       final fallback = serverMessage == null || serverMessage.isEmpty
           ? 'ثبت تابلو ناموفق بود. کد: ${response.statusCode}'
           : serverMessage;
-      Get.snackbar('خطا', fallback);
+      if (response.body.contains('undefined function str_starts_with')) {
+        Get.snackbar('خطا', 'بک‌اند روی PHP قدیمی اجرا می‌شود. تابع str_starts_with موجود نیست.');
+      } else {
+        Get.snackbar('خطا', fallback);
+      }
     } on TimeoutException {
       Get.snackbar('خطا', 'زمان پاسخ‌گویی سرور تمام شد.');
     } on http.ClientException {
