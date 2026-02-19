@@ -13,7 +13,7 @@ import '../../../data/models/province_model.dart';
 class AddBillboardController extends GetxController {
   static const _provincesApi = 'https://tablo.ir/my_api/provinces/list.php';
   static const _citiesApi = 'https://tablo.ir/my_api/cities/list.php';
-  static const _addBillboardApi = 'https://tablo.ir/my_api/billboards/add.php';
+  static const _createBillboardApi = 'https://tablo.ir/my_api/billboards/create.php';
 
   final provinces = <ProvinceModel>[].obs;
   final cityOptions = <CityOption>[].obs;
@@ -283,7 +283,7 @@ class AddBillboardController extends GetxController {
     try {
       final response = await http
           .post(
-            Uri.parse(_addBillboardApi),
+            Uri.parse(_createBillboardApi),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
@@ -291,6 +291,8 @@ class AddBillboardController extends GetxController {
             body: jsonEncode(payload),
           )
           .timeout(const Duration(seconds: 25));
+
+      debugPrint('Create billboard status: ${response.statusCode} body: ${response.body}');
 
       final decoded = _safeDecode(response.body);
       if (decoded == null) {
@@ -304,11 +306,15 @@ class AddBillboardController extends GetxController {
         return;
       }
 
-      Get.snackbar('خطا', decoded['message']?.toString() ?? 'ثبت تابلو ناموفق بود.');
+      final serverMessage = decoded['message']?.toString();
+      final fallback = serverMessage == null || serverMessage.isEmpty
+          ? 'ثبت تابلو ناموفق بود. کد: ${response.statusCode}'
+          : serverMessage;
+      Get.snackbar('خطا', fallback);
     } on TimeoutException {
       Get.snackbar('خطا', 'زمان پاسخ‌گویی سرور تمام شد.');
     } on http.ClientException {
-      Get.snackbar('خطا', 'اتصال وب به سرور برقرار نشد (احتمال CORS/SSL).');
+      Get.snackbar('خطا', 'اتصال وب به سرور برقرار نشد (احتمال CORS/SSL یا endpoint نادرست).');
     } catch (e) {
       Get.snackbar('خطا', 'خطا در ثبت تابلو: ${e.toString()}');
     } finally {
