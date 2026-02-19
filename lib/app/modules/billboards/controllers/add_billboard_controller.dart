@@ -253,7 +253,7 @@ class AddBillboardController extends GetxController {
     }
 
     final userId = _extractUserIdFromToken(token);
-    final imageDataUrl = _buildImageDataUrl();
+    final imageValue = _resolveImageUrlValue();
 
     final payload = <String, dynamic>{
       'province_id': selectedProvinceIds.join(','),
@@ -267,8 +267,8 @@ class AddBillboardController extends GetxController {
       'phone': phoneController.text.trim(),
       'latitude': _nullableNumber(latitudeController.text),
       'longitude': _nullableNumber(longitudeController.text),
-      'seller': userId,
-      'image_url': imageDataUrl,
+      'seller': userId.isEmpty ? '0' : userId,
+      'image_url': imageValue,
       'code': codeController.text.trim(),
       'type': selectedType.value ?? '',
     };
@@ -327,22 +327,14 @@ class AddBillboardController extends GetxController {
     }
   }
 
-  String? _buildImageDataUrl() {
-    final bytes = selectedImageBytes.value;
-    if (bytes == null || bytes.isEmpty) {
+  String? _resolveImageUrlValue() {
+    if (selectedImageName.value.trim().isEmpty) {
       return null;
     }
 
-    final extension = selectedImageName.value.split('.').last.toLowerCase();
-    final mime = switch (extension) {
-      'png' => 'image/png',
-      'webp' => 'image/webp',
-      'gif' => 'image/gif',
-      _ => 'image/jpeg',
-    };
-
-    final base64 = base64Encode(bytes);
-    return 'data:$mime;base64,$base64';
+    // Backend add.php currently stores image_url directly in DB.
+    // To avoid failing inserts on oversized base64 payloads, send only filename here.
+    return selectedImageName.value.trim();
   }
 
   num? _nullableNumber(String input) {
