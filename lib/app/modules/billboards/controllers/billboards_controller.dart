@@ -29,14 +29,15 @@ class BillboardsController extends GetxController {
   final _allBillboards = <BillboardItem>[];
 
   String _initialProvinceId = '';
+  String _initialProvinceName = '';
   String _initialCity = '';
 
+  String _provinceNameFallbackFilter = '';
+
   List<String> get cityOptions {
-    final filtered = selectedProvinceId.value.isEmpty
-        ? _allBillboards
-        : _allBillboards
-            .where((item) => item.provinceId == selectedProvinceId.value)
-            .toList();
+    final filtered = _hasProvinceFilter
+        ? _allBillboards.where(_matchesProvinceFilter).toList()
+        : _allBillboards;
 
     final cities = filtered
         .map((item) => item.city.trim())
@@ -46,6 +47,32 @@ class BillboardsController extends GetxController {
       ..sort();
 
     return cities;
+  }
+
+
+  bool get _hasProvinceFilter =>
+      selectedProvinceId.value.isNotEmpty || _provinceNameFallbackFilter.isNotEmpty;
+
+  bool _matchesProvinceFilter(BillboardItem item) {
+    if (selectedProvinceId.value.isNotEmpty) {
+      final selected = selectedProvinceId.value.trim();
+      final rawProvinceId = item.provinceId.trim();
+      final ids = rawProvinceId
+          .split(',')
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty)
+          .toList();
+
+      if (ids.contains(selected) || rawProvinceId == selected) {
+        return true;
+      }
+    }
+
+    if (_provinceNameFallbackFilter.isNotEmpty) {
+      return item.provinceName.trim() == _provinceNameFallbackFilter;
+    }
+
+    return false;
   }
 
   @override
@@ -71,6 +98,7 @@ class BillboardsController extends GetxController {
     final map = Map<String, dynamic>.from(args);
     _initialProvinceId =
         (map['province_id'] ?? map['provinceId'] ?? '').toString().trim();
+    _initialProvinceName = (map['province_name'] ?? '').toString().trim();
     _initialCity = (map['city'] ?? map['city_name'] ?? '').toString().trim();
 
     if (_initialProvinceId.isNotEmpty) {
@@ -148,19 +176,28 @@ class BillboardsController extends GetxController {
       selectedProvinceId.value = _initialProvinceId;
     }
 
+    if (selectedProvinceId.value.isNotEmpty) {
+      final hasMatchingProvince = _allBillboards.any(_matchesProvinceFilter);
+      if (!hasMatchingProvince && _initialProvinceName.isNotEmpty) {
+        _provinceNameFallbackFilter = _initialProvinceName;
+      }
+    }
+
     if (_initialCity.isNotEmpty &&
         _allBillboards.any((item) => item.city.trim() == _initialCity)) {
       selectedCity.value = _initialCity;
-    } else if (_initialProvinceId.isNotEmpty) {
+    } else if (_hasProvinceFilter) {
       selectedCity.value = '';
     }
 
     _initialProvinceId = '';
+    _initialProvinceName = '';
     _initialCity = '';
   }
 
   void applyProvinceFilter(String? provinceId) {
     selectedProvinceId.value = provinceId ?? '';
+    _provinceNameFallbackFilter = '';
 
     if (selectedCity.value.isNotEmpty &&
         !cityOptions.contains(selectedCity.value)) {
@@ -187,6 +224,7 @@ class BillboardsController extends GetxController {
 
   void clearFilters() {
     selectedProvinceId.value = '';
+    _provinceNameFallbackFilter = '';
     selectedCity.value = '';
     selectedPriceFilter.value = PriceFilter.all;
     quickSearch.value = '';
@@ -197,10 +235,8 @@ class BillboardsController extends GetxController {
   void applyFilters() {
     var filtered = List<BillboardItem>.from(_allBillboards);
 
-    if (selectedProvinceId.value.isNotEmpty) {
-      filtered = filtered
-          .where((item) => item.provinceId == selectedProvinceId.value)
-          .toList();
+    if (_hasProvinceFilter) {
+      filtered = filtered.where(_matchesProvinceFilter).toList();
     }
 
     if (selectedCity.value.isNotEmpty) {
