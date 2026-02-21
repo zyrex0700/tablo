@@ -42,8 +42,8 @@ class BillboardsView extends GetView<BillboardsController> {
                       return GridView.builder(
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 5,
-                          childAspectRatio: 0.92,
+                          crossAxisCount: 6,
+                          childAspectRatio: 0.73,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                         ),

@@ -43,13 +43,8 @@ class _AppHeaderState extends State<AppHeader> {
         children: [
           Row(
             children: [
-              Text(
-                'تابلو',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: const Color(0xFF1F3FE0),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Image.asset("assets/logo/logo.png" , width: 64,height: 32,),
+
               const SizedBox(width: 24),
               ..._menuItems.map(
                 (item) {
@@ -276,14 +271,7 @@ class _AuthDialogState extends State<_AuthDialog> {
           children: [
             Row(
               children: [
-                const Text(
-                  'تابلو',
-                  style: TextStyle(
-                    color: Color(0xFF1F3FE0),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
+               Image.asset("assets/logo/logo.png" , width: 64,height: 32,),
                 const Spacer(),
                 IconButton(
                   onPressed: () => Get.back(),
@@ -375,12 +363,9 @@ class _AuthDialogState extends State<_AuthDialog> {
                 onPressed: () => setState(() => _step = _AuthStep.mobile),
                 child: const Text('ویرایش شماره موبایل'),
               ),
-              TextButton(
-                onPressed: _isLoading ? null : _resendOtp,
-                child: const Text(
-                  'ارسال مجدد کد',
-                  style: TextStyle(color: Color(0xFFA2A7AE), fontSize: 15),
-                ),
+              const Text(
+                'ارسال مجدد کد تا ۰۱:۵۸',
+                style: TextStyle(color: Color(0xFFA2A7AE), fontSize: 15),
               ),
               const SizedBox(height: 12),
               _AuthButton(
@@ -403,8 +388,8 @@ class _AuthDialogState extends State<_AuthDialog> {
   }
 
   Future<void> _submitMobile() async {
-    final phone = _normalizePhone(_mobileController.text);
-    if (phone == null) {
+    final phone = _mobileController.text.trim();
+    if (!RegExp(r'^09\d{9}$').hasMatch(phone)) {
       setState(() => _error = 'شماره موبایل معتبر نیست');
       return;
     }
@@ -423,13 +408,13 @@ class _AuthDialogState extends State<_AuthDialog> {
           )
           .timeout(const Duration(seconds: 20));
 
-      final decoded = _safeDecode(response.body);
-      if (decoded == null) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
         setState(() => _error = 'پاسخ نامعتبر از سرور');
         return;
       }
 
-      if (response.statusCode == 200 && decoded['success'] == true) {
+      if (decoded['success'] == true) {
         setState(() => _step = _AuthStep.otp);
       } else {
         setState(() => _error = decoded['message']?.toString() ?? 'خطا در ارسال کد');
@@ -444,13 +429,8 @@ class _AuthDialogState extends State<_AuthDialog> {
   }
 
   Future<void> _submitOtp() async {
-    final phone = _normalizePhone(_mobileController.text);
+    final phone = _mobileController.text.trim();
     final code = _otpController.text.trim();
-
-    if (phone == null) {
-      setState(() => _error = 'شماره موبایل معتبر نیست');
-      return;
-    }
 
     if (code.length < 4) {
       setState(() => _error = 'کد تایید معتبر نیست');
@@ -471,13 +451,13 @@ class _AuthDialogState extends State<_AuthDialog> {
           )
           .timeout(const Duration(seconds: 20));
 
-      final decoded = _safeDecode(response.body);
-      if (decoded == null) {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
         setState(() => _error = 'پاسخ نامعتبر از سرور');
         return;
       }
 
-      if (response.statusCode == 200 && decoded['success'] == true) {
+      if (decoded['success'] == true) {
         final session = Get.isRegistered<HeaderSession>()
             ? Get.find<HeaderSession>()
             : Get.put(HeaderSession(), permanent: true);
@@ -498,50 +478,6 @@ class _AuthDialogState extends State<_AuthDialog> {
       }
     }
   }
-
-  Future<void> _resendOtp() async {
-    await _submitMobile();
-  }
-
-  String? _normalizePhone(String value) {
-    final englishDigits = value
-        .trim()
-        .replaceAll('۰', '0')
-        .replaceAll('۱', '1')
-        .replaceAll('۲', '2')
-        .replaceAll('۳', '3')
-        .replaceAll('۴', '4')
-        .replaceAll('۵', '5')
-        .replaceAll('۶', '6')
-        .replaceAll('۷', '7')
-        .replaceAll('۸', '8')
-        .replaceAll('۹', '9');
-
-    final onlyDigits = englishDigits.replaceAll(RegExp(r'\D'), '');
-
-    if (RegExp(r'^09\d{9}$').hasMatch(onlyDigits)) {
-      return onlyDigits;
-    }
-
-    if (RegExp(r'^9\d{9}$').hasMatch(onlyDigits)) {
-      return '0$onlyDigits';
-    }
-
-    return null;
-  }
-
-  Map<String, dynamic>? _safeDecode(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) {
-        return decoded;
-      }
-      return null;
-    } catch (_) {
-      return null;
-    }
-  }
-
 }
 
 class _AuthButton extends StatelessWidget {

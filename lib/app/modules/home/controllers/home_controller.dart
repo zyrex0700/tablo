@@ -15,7 +15,7 @@ class HomeController extends GetxController {
   static const _billboardMapApi =
       'https://tablo.ir/my_api/billboards/map.php';
   static const _billboardListApi =
-      'https://tablo.ir/my_api/billboards/list.php?limit=5';
+      'https://tablo.ir/my_api/billboards/list.php?limit=6';
   static const _testimonialsApi =
       'https://tablo.ir/my_api/testimonials/list.php';
   static const _brandsApi = 'https://tablo.ir/my_api/brands/get.php';

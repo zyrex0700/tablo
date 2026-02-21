@@ -29,7 +29,7 @@ class BillboardDetailView extends StatelessWidget {
           child: Column(
             children: [
               Align(
-                alignment: Alignment.centerRight,
+                alignment: Alignment.center,
                 child: Text(
                 '${item.city} - ${item.code}',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -43,9 +43,10 @@ class BillboardDetailView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: 360,
-                    child: _DetailSidebar(item: item),
+                    width: 320,
+                    child: _LocationBox(item: item),
                   ),
+
                   const SizedBox(width: 18),
                   Expanded(
                     child: ClipRRect(
@@ -65,8 +66,8 @@ class BillboardDetailView extends StatelessWidget {
                   ),
                   const SizedBox(width: 18),
                   SizedBox(
-                    width: 320,
-                    child: _LocationBox(item: item),
+                    width: 360,
+                    child: _DetailSidebar(item: item),
                   ),
                 ],
               ),

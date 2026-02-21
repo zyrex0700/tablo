@@ -24,20 +24,22 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/logo/logo.png
   fonts:
     - family: IRANYekan
       fonts:
-        - asset: assets/fonts/iranyekan/IRANYekanThinRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanThinFaNum.ttf
           weight: 100
-        - asset: assets/fonts/iranyekan/IRANYekanLightRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanLightFaNum.ttf
           weight: 300
-        - asset: assets/fonts/iranyekan/IRANYekanRegularRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanRegularFaNum.ttf
           weight: 400
-        - asset: assets/fonts/iranyekan/IRANYekanMediumRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanMediumFaNum.ttf
           weight: 500
-        - asset: assets/fonts/iranyekan/IRANYekanBoldRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanBoldFaNum.ttf
           weight: 700
-        - asset: assets/fonts/iranyekan/IRANYekanExtraBoldRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanExtraBoldFaNum.ttf
           weight: 800
-        - asset: assets/fonts/iranyekan/IRANYekanBlackRd.ttf
+        - asset: assets/fonts/iranyekan/IRANYekanBlackFaNum.ttf
           weight: 900
