@@ -320,19 +320,24 @@ class _PartyBillboardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: 175,
-            child: Image.network(
-              item.imageUrl,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 165,
+                width: double.infinity,
+                child: Image.network(
+                  item.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const DecoratedBox(
+                    decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                    child: Center(child: Icon(Icons.image_not_supported_outlined)),
+                  ),
+                ),
               ),
             ),
           ),
