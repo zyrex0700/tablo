@@ -6,6 +6,7 @@ import '../bindings/home_binding.dart';
 import '../modules/billboards/views/billboard_detail_view.dart';
 import '../modules/billboards/views/add_billboard_view.dart';
 import '../modules/billboards/views/billboards_view.dart';
+import '../modules/home/views/dashboard_view.dart';
 import '../modules/home/views/home_view.dart';
 import '../modules/home/views/simple_page_view.dart';
 import 'app_routes.dart';
@@ -38,6 +39,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.contactUs,
       page: () => const SimplePageView(title: 'صفحه تماس با ما'),
+    ),
+    GetPage(
+      name: AppRoutes.dashboard,
+      page: () => const DashboardView(),
     ),
   ];
 }

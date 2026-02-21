@@ -5,4 +5,5 @@ abstract class AppRoutes {
   static const contactUs = '/contact-us';
   static const billboardDetail = '/billboard-detail';
   static const addBillboard = '/add-billboard';
+  static const dashboard = '/dashboard';
 }

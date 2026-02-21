@@ -217,6 +217,11 @@ class _AppHeaderState extends State<AppHeader> {
       return;
     }
 
+    if (value == 'dashboard') {
+      Get.toNamed(AppRoutes.dashboard);
+      return;
+    }
+
     Get.snackbar('حساب کاربری', 'بخش $value به‌زودی تکمیل می‌شود.');
   }
 
