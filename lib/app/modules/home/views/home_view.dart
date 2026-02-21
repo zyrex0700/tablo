@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../../data/models/billboard_item.dart';
@@ -615,10 +617,19 @@ class _BillboardsMap extends StatefulWidget {
 }
 
 class _BillboardsMapState extends State<_BillboardsMap> {
+  static const _searchPreviewApi =
+      'http://tablo.ir/my_api/cities/search_preview.php';
+
   final _searchController = TextEditingController();
+
+  Timer? _searchDebounce;
+  bool _isSearching = false;
+  String _searchError = '';
+  List<_SearchPreviewItem> _previewItems = const [];
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -651,7 +662,7 @@ class _BillboardsMapState extends State<_BillboardsMap> {
     final primary = Theme.of(context).colorScheme.primary;
 
     return SizedBox(
-      height: 420,
+      height: 480,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
         child: Stack(
@@ -727,11 +738,17 @@ class _BillboardsMapState extends State<_BillboardsMap> {
                 borderRadius: BorderRadius.circular(18),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: _onSearchChanged,
                   textAlign: TextAlign.right,
                   decoration: InputDecoration(
                     hintText: 'جستجو در تابلوها (شهر، کد، محور...)',
                     prefixIcon: const Icon(Icons.search, color: Color(0xFF1D4ED8)),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: _clearSearch,
+                            icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                          ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -746,19 +763,58 @@ class _BillboardsMapState extends State<_BillboardsMap> {
                 ),
               ),
             ),
-            if (filteredItems.isEmpty)
-              const Positioned(
-                top: 88,
-                left: 22,
-                right: 22,
-                child: Card(
-                  color: Color(0xFFFFF7ED),
-                  child: Padding(
-                    padding: EdgeInsets.all(10),
-                    child: Text(
-                      'نتیجه‌ای برای جست‌وجوی شما روی نقشه پیدا نشد.',
-                      textAlign: TextAlign.right,
-                    ),
+            if (_searchController.text.trim().isNotEmpty)
+              Positioned(
+                top: 86,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: const Color(0xFFE9ECEF),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'پیشنمایش نتایج',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22),
+                      ),
+                      const SizedBox(height: 10),
+                      if (_isSearching)
+                        const SizedBox(
+                          height: 120,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (_searchError.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(_searchError, textAlign: TextAlign.right),
+                        )
+                      else if (_previewItems.isEmpty)
+                        const SizedBox(
+                          height: 80,
+                          child: Center(
+                            child: Text('نتیجه‌ای برای پیش‌نمایش پیدا نشد.'),
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          height: 300,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _previewItems.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (context, index) {
+                              final item = _previewItems[index];
+                              return _PreviewSearchCard(item: item);
+                            },
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -766,6 +822,102 @@ class _BillboardsMapState extends State<_BillboardsMap> {
         ),
       ),
     );
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      _loadSearchPreview(value.trim());
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _previewItems = const [];
+      _searchError = '';
+      _isSearching = false;
+    });
+  }
+
+  Future<void> _loadSearchPreview(String query) async {
+    if (query.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _previewItems = const [];
+          _searchError = '';
+          _isSearching = false;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchError = '';
+    });
+
+    try {
+      final uri = Uri.parse(_searchPreviewApi).replace(
+        queryParameters: {
+          'q': query,
+          'limit': '10',
+        },
+      );
+
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) {
+        setState(() {
+          _isSearching = false;
+          _searchError = 'خطا در دریافت نتایج جست‌وجو (کد: ${response.statusCode})';
+        });
+        return;
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        setState(() {
+          _isSearching = false;
+          _searchError = 'پاسخ نامعتبر از سرور جست‌وجو.';
+        });
+        return;
+      }
+
+      final items = decoded['items'];
+      if (decoded['success'] != true || items is! List) {
+        setState(() {
+          _isSearching = false;
+          _searchError = decoded['message']?.toString() ?? 'جست‌وجو ناموفق بود.';
+        });
+        return;
+      }
+
+      final mapped = items
+          .whereType<Map<String, dynamic>>()
+          .map(_SearchPreviewItem.fromJson)
+          .toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _previewItems = mapped;
+        _isSearching = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'اتصال به سرویس جست‌وجو برقرار نشد.';
+      });
+    }
   }
 
   void _showBillboardInfo(BuildContext context, BillboardMapItem item) {
@@ -798,6 +950,94 @@ class _BillboardsMapState extends State<_BillboardsMap> {
           ),
         );
       },
+    );
+  }
+}
+
+class _SearchPreviewItem {
+  const _SearchPreviewItem({
+    required this.id,
+    required this.area,
+    required this.code,
+    required this.city,
+    required this.imageUrl,
+  });
+
+  final String id;
+  final String area;
+  final String code;
+  final String city;
+  final String imageUrl;
+
+  factory _SearchPreviewItem.fromJson(Map<String, dynamic> json) {
+    return _SearchPreviewItem(
+      id: json['id']?.toString() ?? '',
+      area: json['area']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString() ?? '',
+    );
+  }
+}
+
+class _PreviewSearchCard extends StatelessWidget {
+  const _PreviewSearchCard({required this.item});
+
+  final _SearchPreviewItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 145,
+              child: item.imageUrl.isEmpty
+                  ? const DecoratedBox(
+                      decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
+                      child: Icon(Icons.image_not_supported_outlined),
+                    )
+                  : Image.network(
+                      item.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const DecoratedBox(
+                        decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
+                        child: Icon(Icons.image_not_supported_outlined),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            item.area.isEmpty ? '-' : item.area,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'شهر: ${item.city.isEmpty ? '-' : item.city}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: Color(0xFF6B7280)),
+          ),
+          Text(
+            'کد تابلو: ${item.code.isEmpty ? '-' : item.code}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: Color(0xFF6B7280)),
+          ),
+        ],
+      ),
     );
   }
 }
