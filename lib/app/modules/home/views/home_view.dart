@@ -14,6 +14,7 @@ import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
 import '../../../widgets/app_page_scaffold.dart';
+import '../../../routes/app_routes.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -627,37 +628,47 @@ class _ProvinceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 180,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Image.network(
-              province.imageUrl,
-              width: 150,
-              height: 130,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox(
-                height: 110,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                  child: Icon(Icons.image_not_supported_outlined),
+    return InkWell(
+      onTap: () => Get.toNamed(
+        AppRoutes.billboards,
+        arguments: {
+          'province_id': province.id,
+          'province_name': province.name,
+        },
+      ),
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: 180,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(
+                province.imageUrl,
+                width: 150,
+                height: 130,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox(
+                  height: 110,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                    child: Icon(Icons.image_not_supported_outlined),
+                  ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              province.name,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                province.name,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

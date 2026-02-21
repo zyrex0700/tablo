@@ -28,6 +28,9 @@ class BillboardsController extends GetxController {
 
   final _allBillboards = <BillboardItem>[];
 
+  String _initialProvinceId = '';
+  String _initialCity = '';
+
   List<String> get cityOptions {
     final filtered = selectedProvinceId.value.isEmpty
         ? _allBillboards
@@ -48,6 +51,7 @@ class BillboardsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _readInitialFilters();
     fetchProvinces();
     fetchBillboards();
   }
@@ -56,6 +60,25 @@ class BillboardsController extends GetxController {
   void onClose() {
     quickSearchController.dispose();
     super.onClose();
+  }
+
+  void _readInitialFilters() {
+    final args = Get.arguments;
+    if (args is! Map) {
+      return;
+    }
+
+    final map = Map<String, dynamic>.from(args);
+    _initialProvinceId =
+        (map['province_id'] ?? map['provinceId'] ?? '').toString().trim();
+    _initialCity = (map['city'] ?? map['city_name'] ?? '').toString().trim();
+
+    if (_initialProvinceId.isNotEmpty) {
+      selectedProvinceId.value = _initialProvinceId;
+    }
+    if (_initialCity.isNotEmpty) {
+      selectedCity.value = _initialCity;
+    }
   }
 
   Future<void> fetchProvinces() async {
@@ -111,12 +134,29 @@ class BillboardsController extends GetxController {
               .toList(),
         );
 
+      _applyInitialRouteFilters();
       applyFilters();
     } catch (_) {
       error.value = 'اتصال به سرور برقرار نشد.';
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _applyInitialRouteFilters() {
+    if (_initialProvinceId.isNotEmpty) {
+      selectedProvinceId.value = _initialProvinceId;
+    }
+
+    if (_initialCity.isNotEmpty &&
+        _allBillboards.any((item) => item.city.trim() == _initialCity)) {
+      selectedCity.value = _initialCity;
+    } else if (_initialProvinceId.isNotEmpty) {
+      selectedCity.value = '';
+    }
+
+    _initialProvinceId = '';
+    _initialCity = '';
   }
 
   void applyProvinceFilter(String? provinceId) {
