@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../widgets/app_page_scaffold.dart';
+
 class SimplePageView extends StatelessWidget {
   const SimplePageView({
     super.key,
@@ -10,8 +12,8 @@ class SimplePageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
+    return AppPageScaffold(
+      child: Center(
         child: Text(
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../../data/models/billboard_item.dart';
@@ -11,82 +13,28 @@ import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
+import '../../../widgets/app_page_scaffold.dart';
+import '../../../routes/app_routes.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
   static const _mainBannerUrl =
-      'http://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
-  static const _partyBannerUrl = 'http://tablo.ir/my_api/images/tablo-party.png';
+      'https://tablo.ir/my_api/images/main%20banner%20desktop.jpg';
+  static const _partyBannerUrl = 'https://tablo.ir/my_api/images/tablo-party.png';
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFE2E8F0)),
-                ),
-                borderRadius: BorderRadius.all(Radius.circular(15)),
-              ),
-              child: Row(
-                children: [
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('ورود / ثبت نام'),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      ...controller.menuItems.map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(left: 18),
-                          child: TextButton(
-                            onPressed: () {
-                              if (Get.currentRoute != item.route) {
-                                Get.toNamed(item.route);
-                              }
-                            },
-                            child: Text(item.title),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'T',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(32, 15, 32, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+    return AppPageScaffold(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(32, 15, 32, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                   Obx(() {
                     if (controller.isLoadingBillboards.value) {
                       return const Center(
@@ -113,221 +61,237 @@ class HomeView extends GetView<HomeController> {
                       items: controller.billboardsWithLocation,
                     );
                   }),
-                  const SizedBox(height: 38),
-                  Text(
-                    'محبوب ترین مناطق',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    if (controller.isLoadingProvinces.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
 
-                    if (controller.provincesError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.provincesError.value),
-                      );
-                    }
+               Padding(
+                 padding: const EdgeInsets.symmetric(horizontal: 100),
+                 child: Column( crossAxisAlignment:  CrossAxisAlignment.start,children: [     const SizedBox(height: 38),
+                   Text(
+                     'محبوب ترین مناطق',
+                     style: theme.textTheme.titleLarge?.copyWith(
+                       fontWeight: FontWeight.bold,
+                     ),
+                   ),   const SizedBox(height: 16),
+                   Obx(() {
+                     if (controller.isLoadingProvinces.value) {
+                       return const Center(
+                         child: Padding(
+                           padding: EdgeInsets.symmetric(vertical: 20),
+                           child: CircularProgressIndicator(),
+                         ),
+                       );
+                     }
 
-                    return SizedBox(
-                      height: 200,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: controller.provinces.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          final province = controller.provinces[index];
-                          return _ProvinceCard(province: province);
-                        },
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 28),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Image.network(
-                      _mainBannerUrl,
-                      fit: BoxFit.fitHeight,
-                      errorBuilder: (_, __, ___) => const DecoratedBox(
-                        decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                        child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 34),
-                  Text(
-                    'تابلو پارتی',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    if (controller.isLoadingPartyBillboards.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
+                     if (controller.provincesError.value.isNotEmpty) {
+                       return Container(
+                         width: double.infinity,
+                         padding: const EdgeInsets.all(16),
+                         decoration: BoxDecoration(
+                           color: const Color(0xFFFFF1F2),
+                           borderRadius: BorderRadius.circular(15),
+                         ),
+                         child: Text(controller.provincesError.value),
+                       );
+                     }
 
-                    if (controller.partyBillboardsError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.partyBillboardsError.value),
-                      );
-                    }
+                     return SizedBox(
+                       height: 200,
+                       child: ListView.separated(
+                         scrollDirection: Axis.horizontal,
+                         itemCount: controller.provinces.length,
+                         separatorBuilder: (_, __) => const SizedBox(width: 14),
+                         itemBuilder: (context, index) {
+                           final province = controller.provinces[index];
+                           return _ProvinceCard(province: province);
+                         },
+                       ),
+                     );
+                   }),
+                   const SizedBox(height: 28),
+                   ClipRRect(
+                     borderRadius: BorderRadius.circular(15),
+                     child: Image.network(
+                       _mainBannerUrl,
+                       fit: BoxFit.fitHeight,
+                       errorBuilder: (_, __, ___) => const DecoratedBox(
+                         decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                         child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
+                       ),
+                     ),
+                   ),
+                   const SizedBox(height: 34),
+                   Text(
+                     'تابلو پارتی',
+                     style: theme.textTheme.titleLarge?.copyWith(
+                       fontWeight: FontWeight.bold,
+                     ),
+                   ),
+                   const SizedBox(height: 16),
+                   Obx(() {
+                     if (controller.isLoadingPartyBillboards.value) {
+                       return const Center(
+                         child: Padding(
+                           padding: EdgeInsets.symmetric(vertical: 20),
+                           child: CircularProgressIndicator(),
+                         ),
+                       );
+                     }
 
-                    return SizedBox(
-                      height: 350,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: controller.partyBillboards.length + 1,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _PartyBannerCard(imageUrl: _partyBannerUrl);
-                          }
+                     if (controller.partyBillboardsError.value.isNotEmpty) {
+                       return Container(
+                         width: double.infinity,
+                         padding: const EdgeInsets.all(16),
+                         decoration: BoxDecoration(
+                           color: const Color(0xFFFFF1F2),
+                           borderRadius: BorderRadius.circular(15),
+                         ),
+                         child: Text(controller.partyBillboardsError.value),
+                       );
+                     }
 
-                          final item = controller.partyBillboards[index - 1];
-                          return _PartyBillboardCard(item: item);
-                        },
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 40),
-                  Text(
-                    'برندهای همکار',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  // Obx(() {
-                  //   final list = controller.brands;
-                  //
-                  //   return Column(
-                  //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     children: [
-                  //       _AutoBrandsRow(
-                  //         brands: list,
-                  //         moveRight: true,
-                  //       ),
-                  //       const SizedBox(height: 14),
-                  //       _AutoBrandsRow(
-                  //         brands: list,
-                  //         moveRight: false,
-                  //       ),
-                  //       if (controller.isLoadingBrands.value)
-                  //         const Padding(
-                  //           padding: EdgeInsets.only(top: 10),
-                  //           child: Center(child: CircularProgressIndicator()),
-                  //         ),
-                  //       if (controller.brandsError.value.isNotEmpty)
-                  //         Padding(
-                  //           padding: const EdgeInsets.only(top: 10),
-                  //           child: Container(
-                  //             width: double.infinity,
-                  //             padding: const EdgeInsets.all(16),
-                  //             decoration: BoxDecoration(
-                  //               color: const Color(0xFFFFF1F2),
-                  //               borderRadius: BorderRadius.circular(15),
-                  //             ),
-                  //             child: Text(controller.brandsError.value),
-                  //           ),
-                  //         ),
-                  //     ],
-                  //   );
-                  // }),
-                  const SizedBox(height: 40),
-                  Text(
-                    'نظرات مشتریان',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    final isLoading = controller.isLoadingTestimonials.value;
-                    final hasError = controller.testimonialsError.value.isNotEmpty;
+                     return SizedBox(
+                       height: 375,
+                       child: ListView.separated(
+                         scrollDirection: Axis.horizontal,
+                         itemCount: controller.partyBillboards.length + 1,
+                         separatorBuilder: (_, __) => const SizedBox(width: 14),
+                         itemBuilder: (context, index) {
+                           if (index == 0) {
+                             return _PartyBannerCard(imageUrl: _partyBannerUrl);
+                           }
 
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 230,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: controller.testimonials.isEmpty
-                                ? 1
-                                : controller.testimonials.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 16),
-                            itemBuilder: (context, index) {
-                              if (controller.testimonials.isEmpty) {
-                                return const _TestimonialCard(
-                                  item: TestimonialItem(
-                                    id: 'placeholder',
-                                    companyName: 'نمونه',
-                                    personName: 'کاربر نمونه',
-                                    role: 'مدیر',
-                                    quote:
-                                        'در حال بارگذاری نظرات مشتریان هستیم. در صورت مشکل اتصال، کمی بعد دوباره تلاش کنید.',
-                                    avatarUrl: '',
-                                  ),
-                                );
-                              }
+                           final item = controller.partyBillboards[index - 1];
+                           return _PartyBillboardCard(item: item);
+                         },
+                       ),
+                     );
+                   }),
+                   const SizedBox(height: 40),
+                   Text(
+                     'برندهای همکار',
+                     style: theme.textTheme.titleLarge?.copyWith(
+                       fontWeight: FontWeight.bold,
+                     ),
+                   ),
+                   const SizedBox(height: 14),
+                   // Obx(() {
+                   //   final list = controller.brands;
+                   //
+                   //   return Column(
+                   //     crossAxisAlignment: CrossAxisAlignment.start,
+                   //     children: [
+                   //       _AutoBrandsRow(
+                   //         brands: list,
+                   //         moveRight: true,
+                   //       ),
+                   //       const SizedBox(height: 14),
+                   //       _AutoBrandsRow(
+                   //         brands: list,
+                   //         moveRight: false,
+                   //       ),
+                   //       if (controller.isLoadingBrands.value)
+                   //         const Padding(
+                   //           padding: EdgeInsets.only(top: 10),
+                   //           child: Center(child: CircularProgressIndicator()),
+                   //         ),
+                   //       if (controller.brandsError.value.isNotEmpty)
+                   //         Padding(
+                   //           padding: const EdgeInsets.only(top: 10),
+                   //           child: Container(
+                   //             width: double.infinity,
+                   //             padding: const EdgeInsets.all(16),
+                   //             decoration: BoxDecoration(
+                   //               color: const Color(0xFFFFF1F2),
+                   //               borderRadius: BorderRadius.circular(15),
+                   //             ),
+                   //             child: Text(controller.brandsError.value),
+                   //           ),
+                   //         ),
+                   //     ],
+                   //   );
+                   // }),
+                   const SizedBox(height: 40),
+                   Text(
+                     'نظرات مشتریان',
+                     style: theme.textTheme.titleLarge?.copyWith(
+                       fontWeight: FontWeight.bold,
+                     ),
+                   ),
+                   const SizedBox(height: 16),
+                   Obx(() {
+                     final isLoading = controller.isLoadingTestimonials.value;
+                     final hasError = controller.testimonialsError.value.isNotEmpty;
 
-                              final item = controller.testimonials[index];
-                              return _TestimonialCard(item: item);
-                            },
-                          ),
-                        ),
-                        if (isLoading)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 12),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        if (hasError)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Text(controller.testimonialsError.value),
-                            ),
-                          ),
-                      ],
-                    );
-                  }),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ],
+                     return Column(
+                       crossAxisAlignment: CrossAxisAlignment.center,
+                       children: [
+                         SizedBox(
+                           height: 230,
+                           child: Center(
+                             child: ListView.separated(
+                               scrollDirection: Axis.horizontal,
+                               shrinkWrap: true,
+                               padding: const EdgeInsets.symmetric(horizontal: 24),
+                               physics: const BouncingScrollPhysics(),
+                               itemCount: controller.testimonials.isEmpty
+                                   ? 1
+                                   : controller.testimonials.length,
+                               separatorBuilder: (_, __) => const SizedBox(width: 16),
+                               itemBuilder: (context, index) {
+                                 if (controller.testimonials.isEmpty) {
+                                   return const Center(
+                                     child: _TestimonialCard(
+                                       item: TestimonialItem(
+                                         id: 'placeholder',
+                                         companyName: 'نمونه',
+                                         personName: 'کاربر نمونه',
+                                         role: 'مدیر',
+                                         quote:
+                                         'در حال بارگذاری نظرات مشتریان هستیم. در صورت مشکل اتصال، کمی بعد دوباره تلاش کنید.',
+                                         avatarUrl: '',
+                                       ),
+                                     ),
+                                   );
+                                 }
+
+                                 final item = controller.testimonials[index];
+
+                                 return Center(
+                                   child: _TestimonialCard(item: item),
+                                 );
+                               },
+                             ),
+                           ),
+                         ),
+
+                         if (isLoading)
+                           const Padding(
+                             padding: EdgeInsets.only(top: 12),
+                             child: Center(child: CircularProgressIndicator()),
+                           ),
+
+                         if (hasError)
+                           Padding(
+                             padding: const EdgeInsets.only(top: 12),
+                             child: Container(
+                               width: double.infinity,
+                               padding: const EdgeInsets.all(16),
+                               decoration: BoxDecoration(
+                                 color: const Color(0xFFFFF1F2),
+                                 borderRadius: BorderRadius.circular(15),
+                               ),
+                               child: Text(
+                                 controller.testimonialsError.value,
+                                 textAlign: TextAlign.center, // وسط چین متن ارور
+                               ),
+                             ),
+                           ),
+                       ],
+                     );
+                   }),
+                   const SizedBox(height: 40),],),
+               )
+            ],
+          ),
         ),
       ),
     );
@@ -375,19 +339,24 @@ class _PartyBillboardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: 175,
-            child: Image.network(
-              item.imageUrl,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const DecoratedBox(
-                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 165,
+                width: double.infinity,
+                child: Image.network(
+                  item.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const DecoratedBox(
+                    decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                    child: Center(child: Icon(Icons.image_not_supported_outlined)),
+                  ),
+                ),
               ),
             ),
           ),
@@ -397,7 +366,7 @@ class _PartyBillboardCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.type,
+                  item.type+" " + item.area,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -408,6 +377,34 @@ class _PartyBillboardCard extends StatelessWidget {
                 Text('ابعاد: ${item.dimensionLabel}'),
                 const SizedBox(height: 4),
                 Text('کد تابلو: ${item.code}'),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'اجاره ماهانه: ${item.rentLabel}',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'نورپردازی: ${item.lighting.isEmpty ? 'ثبت نشده' : item.lighting}',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -626,50 +623,82 @@ class _ProvinceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 180,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Image.network(
-              province.imageUrl,
-              width: 150,
-              height: 130,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox(
-                height: 110,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                  child: Icon(Icons.image_not_supported_outlined),
+    return InkWell(
+      onTap: () => Get.toNamed(
+        AppRoutes.billboards,
+        arguments: {
+          'province_id': province.id,
+          'province_name': province.name,
+        },
+      ),
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: 180,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(
+                province.imageUrl,
+                width: 150,
+                height: 130,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox(
+                  height: 110,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                    child: Icon(Icons.image_not_supported_outlined),
+                  ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              province.name,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                province.name,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _BillboardsMap extends StatelessWidget {
+class _BillboardsMap extends StatefulWidget {
   const _BillboardsMap({required this.items});
 
   final List<BillboardMapItem> items;
 
   @override
+  State<_BillboardsMap> createState() => _BillboardsMapState();
+}
+
+class _BillboardsMapState extends State<_BillboardsMap> {
+  static const _searchPreviewApi =
+      'https://tablo.ir/my_api/billboards/search_preview.php';
+
+  final _searchController = TextEditingController();
+
+  Timer? _searchDebounce;
+  bool _isSearching = false;
+  String _searchError = '';
+  List<_SearchPreviewItem> _previewItems = const [];
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
+    if (widget.items.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -681,77 +710,276 @@ class _BillboardsMap extends StatelessWidget {
       );
     }
 
-    final center = LatLng(items.first.latitude, items.first.longitude);
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredItems = query.isEmpty
+        ? widget.items
+        : widget.items.where((item) {
+            final text = '${item.city} ${item.area} ${item.provinceId} ${item.id}'
+                .toLowerCase();
+            return text.contains(query);
+          }).toList();
+
+    final centerSource = filteredItems.isNotEmpty ? filteredItems : widget.items;
+    final center = LatLng(centerSource.first.latitude, centerSource.first.longitude);
     final primary = Theme.of(context).colorScheme.primary;
 
     return SizedBox(
-      height: 420,
+      height: 480,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: center,
-            initialZoom: 6,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all,
-            ),
-          ),
+        child: Stack(
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.tablo.rebuild',
-            ),
-            MarkerClusterLayerWidget(
-              options: MarkerClusterLayerOptions(
-                maxClusterRadius: 55,
-                size: const Size(44, 44),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(40),
-                maxZoom: 15,
-                markers: items
-                    .map(
-                      (item) => Marker(
-                        point: LatLng(item.latitude, item.longitude),
-                        width: 38,
-                        height: 38,
-                        child: GestureDetector(
-                          onTap: () => _showBillboardInfo(context, item),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: primary,
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.white,
+            FlutterMap(
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 6,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.tablo.rebuild',
+                ),
+                MarkerClusterLayerWidget(
+                  options: MarkerClusterLayerOptions(
+                    maxClusterRadius: 55,
+                    size: const Size(44, 44),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(40),
+                    maxZoom: 15,
+                    markers: filteredItems
+                        .map(
+                          (item) => Marker(
+                            point: LatLng(item.latitude, item.longitude),
+                            width: 38,
+                            height: 38,
+                            child: GestureDetector(
+                              onTap: () => _showBillboardInfo(context, item),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: primary,
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
+                        )
+                        .toList(),
+                    builder: (context, markers) {
+                      return Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                      ),
-                    )
-                    .toList(),
-                builder: (context, markers) {
-                  return Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: BorderRadius.circular(15),
+                        child: Text(
+                          markers.length.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 18,
+              left: 22,
+              right: 22,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(18),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  textAlign: TextAlign.right,
+                  decoration: InputDecoration(
+                    hintText: 'جستجو در تابلوها (شهر، کد، محور...)',
+                    prefixIcon: const Icon(Icons.search, color: Color(0xFF1D4ED8)),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: _clearSearch,
+                            icon: const Icon(Icons.close, color: Color(0xFF6B7280)),
+                          ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
                     ),
-                    child: Text(
-                      markers.length.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
+            if (_searchController.text.trim().isNotEmpty)
+              Positioned(
+                top: 86,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: const Color(0xFFE9ECEF),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'پیشنمایش نتایج',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 22),
+                      ),
+                      const SizedBox(height: 10),
+                      if (_isSearching)
+                        const SizedBox(
+                          height: 120,
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (_searchError.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(_searchError, textAlign: TextAlign.right),
+                        )
+                      else if (_previewItems.isEmpty)
+                        const SizedBox(
+                          height: 80,
+                          child: Center(
+                            child: Text('نتیجه‌ای برای پیش‌نمایش پیدا نشد.'),
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          height: 300,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _previewItems.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 14),
+                            itemBuilder: (context, index) {
+                              final item = _previewItems[index];
+                              return _PreviewSearchCard(item: item);
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() {});
+
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      _loadSearchPreview(value.trim());
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _previewItems = const [];
+      _searchError = '';
+      _isSearching = false;
+    });
+  }
+
+  Future<void> _loadSearchPreview(String query) async {
+    if (query.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _previewItems = const [];
+          _searchError = '';
+          _isSearching = false;
+        });
+      }
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchError = '';
+    });
+
+    try {
+      final uri = Uri.parse(_searchPreviewApi).replace(
+        queryParameters: {
+          'q': query,
+          'limit': '10',
+        },
+      );
+
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) {
+        setState(() {
+          _isSearching = false;
+          _searchError = 'خطا در دریافت نتایج جست‌وجو (کد: ${response.statusCode})';
+        });
+        return;
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        setState(() {
+          _isSearching = false;
+          _searchError = 'پاسخ نامعتبر از سرور جست‌وجو.';
+        });
+        return;
+      }
+
+      final items = decoded['items'];
+      if (decoded['success'] != true || items is! List) {
+        setState(() {
+          _isSearching = false;
+          _searchError = decoded['message']?.toString() ?? 'جست‌وجو ناموفق بود.';
+        });
+        return;
+      }
+
+      final mapped = items
+          .whereType<Map<String, dynamic>>()
+          .map(_SearchPreviewItem.fromJson)
+          .toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _previewItems = mapped;
+        _isSearching = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isSearching = false;
+        _searchError = 'اتصال به سرویس جست‌وجو برقرار نشد.';
+      });
+    }
   }
 
   void _showBillboardInfo(BuildContext context, BillboardMapItem item) {
@@ -784,6 +1012,94 @@ class _BillboardsMap extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SearchPreviewItem {
+  const _SearchPreviewItem({
+    required this.id,
+    required this.area,
+    required this.code,
+    required this.city,
+    required this.imageUrl,
+  });
+
+  final String id;
+  final String area;
+  final String code;
+  final String city;
+  final String imageUrl;
+
+  factory _SearchPreviewItem.fromJson(Map<String, dynamic> json) {
+    return _SearchPreviewItem(
+      id: json['id']?.toString() ?? '',
+      area: json['area']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      imageUrl: json['image_url']?.toString() ?? '',
+    );
+  }
+}
+
+class _PreviewSearchCard extends StatelessWidget {
+  const _PreviewSearchCard({required this.item});
+
+  final _SearchPreviewItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 220,
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 145,
+              child: item.imageUrl.isEmpty
+                  ? const DecoratedBox(
+                      decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
+                      child: Icon(Icons.image_not_supported_outlined),
+                    )
+                  : Image.network(
+                      item.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const DecoratedBox(
+                        decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
+                        child: Icon(Icons.image_not_supported_outlined),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            item.area.isEmpty ? '-' : item.area,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'شهر: ${item.city.isEmpty ? '-' : item.city}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: Color(0xFF6B7280)),
+          ),
+          Text(
+            'کد تابلو: ${item.code.isEmpty ? '-' : item.code}',
+            textAlign: TextAlign.right,
+            style: const TextStyle(color: Color(0xFF6B7280)),
+          ),
+        ],
+      ),
     );
   }
 }
