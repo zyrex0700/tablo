@@ -605,14 +605,27 @@ class _ProvinceCard extends StatelessWidget {
   }
 }
 
-class _BillboardsMap extends StatelessWidget {
+class _BillboardsMap extends StatefulWidget {
   const _BillboardsMap({required this.items});
 
   final List<BillboardMapItem> items;
 
   @override
+  State<_BillboardsMap> createState() => _BillboardsMapState();
+}
+
+class _BillboardsMapState extends State<_BillboardsMap> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
+    if (widget.items.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -624,73 +637,131 @@ class _BillboardsMap extends StatelessWidget {
       );
     }
 
-    final center = LatLng(items.first.latitude, items.first.longitude);
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredItems = query.isEmpty
+        ? widget.items
+        : widget.items.where((item) {
+            final text = '${item.city} ${item.area} ${item.provinceId} ${item.id}'
+                .toLowerCase();
+            return text.contains(query);
+          }).toList();
+
+    final centerSource = filteredItems.isNotEmpty ? filteredItems : widget.items;
+    final center = LatLng(centerSource.first.latitude, centerSource.first.longitude);
     final primary = Theme.of(context).colorScheme.primary;
 
     return SizedBox(
       height: 420,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(15),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: center,
-            initialZoom: 6,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all,
-            ),
-          ),
+        child: Stack(
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.tablo.rebuild',
-            ),
-            MarkerClusterLayerWidget(
-              options: MarkerClusterLayerOptions(
-                maxClusterRadius: 55,
-                size: const Size(44, 44),
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(40),
-                maxZoom: 15,
-                markers: items
-                    .map(
-                      (item) => Marker(
-                        point: LatLng(item.latitude, item.longitude),
-                        width: 38,
-                        height: 38,
-                        child: GestureDetector(
-                          onTap: () => _showBillboardInfo(context, item),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: primary,
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.white,
+            FlutterMap(
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 6,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.tablo.rebuild',
+                ),
+                MarkerClusterLayerWidget(
+                  options: MarkerClusterLayerOptions(
+                    maxClusterRadius: 55,
+                    size: const Size(44, 44),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(40),
+                    maxZoom: 15,
+                    markers: filteredItems
+                        .map(
+                          (item) => Marker(
+                            point: LatLng(item.latitude, item.longitude),
+                            width: 38,
+                            height: 38,
+                            child: GestureDetector(
+                              onTap: () => _showBillboardInfo(context, item),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: primary,
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
                           ),
+                        )
+                        .toList(),
+                    builder: (context, markers) {
+                      return Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: primary,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                      ),
-                    )
-                    .toList(),
-                builder: (context, markers) {
-                  return Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: BorderRadius.circular(15),
+                        child: Text(
+                          markers.length.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 18,
+              left: 22,
+              right: 22,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(18),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (_) => setState(() {}),
+                  textAlign: TextAlign.right,
+                  decoration: InputDecoration(
+                    hintText: 'جستجو در تابلوها (شهر، کد، محور...)',
+                    prefixIcon: const Icon(Icons.search, color: Color(0xFF1D4ED8)),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
                     ),
-                    child: Text(
-                      markers.length.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
+            if (filteredItems.isEmpty)
+              const Positioned(
+                top: 88,
+                left: 22,
+                right: 22,
+                child: Card(
+                  color: Color(0xFFFFF7ED),
+                  child: Padding(
+                    padding: EdgeInsets.all(10),
+                    child: Text(
+                      'نتیجه‌ای برای جست‌وجوی شما روی نقشه پیدا نشد.',
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
