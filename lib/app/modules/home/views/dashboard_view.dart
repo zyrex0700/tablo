@@ -1,42 +1,11 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../../widgets/app_page_scaffold.dart';
+import '../controllers/dashboard_controller.dart';
 
-class DashboardView extends StatefulWidget {
+class DashboardView extends GetView<DashboardController> {
   const DashboardView({super.key});
-
-  @override
-  State<DashboardView> createState() => _DashboardViewState();
-}
-
-class _DashboardViewState extends State<DashboardView> {
-  final _companyNameController = TextEditingController();
-  final _managerNameController = TextEditingController();
-  final _startYearController = TextEditingController();
-  final _instagramController = TextEditingController();
-  final _mainPhoneController = TextEditingController();
-  final _websiteController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _brandDescController = TextEditingController();
-
-  String _license1 = '';
-  String _license2 = '';
-
-  @override
-  void dispose() {
-    _companyNameController.dispose();
-    _managerNameController.dispose();
-    _startYearController.dispose();
-    _instagramController.dispose();
-    _mainPhoneController.dispose();
-    _websiteController.dispose();
-    _emailController.dispose();
-    _addressController.dispose();
-    _brandDescController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,28 +36,28 @@ class _DashboardViewState extends State<DashboardView> {
                     style: TextStyle(color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 16),
-                  _input(_companyNameController, 'نام شرکت'),
+                  _input(controller.companyNameController, 'نام شرکت'),
                   const SizedBox(height: 10),
-                  _input(_managerNameController, 'نام مدیرعامل'),
+                  _input(controller.managerNameController, 'نام مدیرعامل'),
                   const SizedBox(height: 10),
-                  _input(_startYearController, 'سال شروع فعالیت (مثلاً ۱۳۸۵)'),
+                  _input(controller.startYearController, 'سال شروع فعالیت (مثلاً ۱۳۸۵)'),
                   const SizedBox(height: 16),
                   const Divider(height: 1),
                   const SizedBox(height: 16),
                   _input(
-                    _instagramController,
+                    controller.instagramController,
                     'آدرس اینستاگرام (بدون @ یا با @، فرقی ندارد)',
                   ),
                   const SizedBox(height: 10),
-                  _input(_mainPhoneController, 'شماره تماس اصلی'),
+                  _input(controller.mainPhoneController, 'شماره تماس اصلی'),
                   const SizedBox(height: 10),
-                  _input(_websiteController, 'وبسایت (مثلاً https://example.com)'),
+                  _input(controller.websiteController, 'وبسایت (مثلاً https://example.com)'),
                   const SizedBox(height: 10),
-                  _input(_emailController, 'ایمیل'),
+                  _input(controller.emailController, 'ایمیل'),
                   const SizedBox(height: 10),
-                  _input(_addressController, 'آدرس شرکت', minLines: 2),
+                  _input(controller.addressController, 'آدرس شرکت', minLines: 2),
                   const SizedBox(height: 10),
-                  _input(_brandDescController, 'شعار برند / توضیح کوتاه', minLines: 2),
+                  _input(controller.brandDescController, 'شعار برند / توضیح کوتاه', minLines: 2),
                   const SizedBox(height: 20),
                   const Divider(height: 1),
                   const SizedBox(height: 16),
@@ -106,26 +75,20 @@ class _DashboardViewState extends State<DashboardView> {
                     style: TextStyle(color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 12),
-                  _docRow(
-                    title: 'مجوز شماره ۱',
-                    fileName: _license1,
-                    onPick: () async {
-                      final name = await _pickDoc();
-                      if (name != null && mounted) {
-                        setState(() => _license1 = name);
-                      }
-                    },
+                  Obx(
+                    () => _docRow(
+                      title: 'مجوز شماره ۱',
+                      fileName: controller.license1.value,
+                      onPick: controller.pickLicense1,
+                    ),
                   ),
                   const SizedBox(height: 10),
-                  _docRow(
-                    title: 'مجوز شماره ۲',
-                    fileName: _license2,
-                    onPick: () async {
-                      final name = await _pickDoc();
-                      if (name != null && mounted) {
-                        setState(() => _license2 = name);
-                      }
-                    },
+                  Obx(
+                    () => _docRow(
+                      title: 'مجوز شماره ۲',
+                      fileName: controller.license2.value,
+                      onPick: controller.pickLicense2,
+                    ),
                   ),
                   const SizedBox(height: 18),
                   SizedBox(
@@ -210,22 +173,5 @@ class _DashboardViewState extends State<DashboardView> {
         ],
       ),
     );
-  }
-
-  Future<String?> _pickDoc() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
-        withData: true,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        return null;
-      }
-
-      return result.files.first.name;
-    } catch (_) {
-      return null;
-    }
   }
 }

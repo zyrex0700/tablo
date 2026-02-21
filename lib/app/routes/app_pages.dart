@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../bindings/add_billboard_binding.dart';
 import '../bindings/billboards_binding.dart';
+import '../bindings/dashboard_binding.dart';
 import '../bindings/home_binding.dart';
 import '../modules/billboards/views/billboard_detail_view.dart';
 import '../modules/billboards/views/add_billboard_view.dart';
@@ -43,6 +44,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.dashboard,
       page: () => const DashboardView(),
+      binding: DashboardBinding(),
     ),
   ];
 }
