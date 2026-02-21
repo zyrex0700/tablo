@@ -30,253 +30,276 @@ class HomeView extends GetView<HomeController> {
     return AppPageScaffold(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(32, 15, 32, 24),
+          padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                  Obx(() {
-                    if (controller.isLoadingBillboards.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-
-                    if (controller.billboardsError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.billboardsError.value),
-                      );
-                    }
-
-                    return _BillboardsMap(
-                      items: controller.billboardsWithLocation,
-                    );
-                  }),
-                  const SizedBox(height: 38),
-                  Text(
-                    'محبوب ترین مناطق',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+              const SizedBox(height: 15),
+              Obx(() {
+                if (controller.isLoadingBillboards.value) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: CircularProgressIndicator(),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    if (controller.isLoadingProvinces.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
+                  );
+                }
 
-                    if (controller.provincesError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.provincesError.value),
-                      );
-                    }
-
-                    return SizedBox(
-                      height: 200,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: controller.provinces.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          final province = controller.provinces[index];
-                          return _ProvinceCard(province: province);
-                        },
+                if (controller.billboardsError.value.isNotEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1F2),
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                    );
-                  }),
-                  const SizedBox(height: 28),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Image.network(
-                      _mainBannerUrl,
-                      fit: BoxFit.fitHeight,
-                      errorBuilder: (_, __, ___) => const DecoratedBox(
-                        decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
-                        child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
+                      child: Text(controller.billboardsError.value),
+                    ),
+                  );
+                }
+
+                return _BillboardsMap(
+                  items: controller.billboardsWithLocation,
+                );
+              }),
+              const SizedBox(height: 38),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'محبوب ترین مناطق',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 34),
-                  Text(
-                    'تابلو پارتی',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    if (controller.isLoadingPartyBillboards.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-
-                    if (controller.partyBillboardsError.value.isNotEmpty) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F2),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: Text(controller.partyBillboardsError.value),
-                      );
-                    }
-
-                    return SizedBox(
-                      height: 350,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: controller.partyBillboards.length + 1,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _PartyBannerCard(imageUrl: _partyBannerUrl);
-                          }
-
-                          final item = controller.partyBillboards[index - 1];
-                          return _PartyBillboardCard(item: item);
-                        },
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 40),
-                  Text(
-                    'برندهای همکار',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  // Obx(() {
-                  //   final list = controller.brands;
-                  //
-                  //   return Column(
-                  //     crossAxisAlignment: CrossAxisAlignment.start,
-                  //     children: [
-                  //       _AutoBrandsRow(
-                  //         brands: list,
-                  //         moveRight: true,
-                  //       ),
-                  //       const SizedBox(height: 14),
-                  //       _AutoBrandsRow(
-                  //         brands: list,
-                  //         moveRight: false,
-                  //       ),
-                  //       if (controller.isLoadingBrands.value)
-                  //         const Padding(
-                  //           padding: EdgeInsets.only(top: 10),
-                  //           child: Center(child: CircularProgressIndicator()),
-                  //         ),
-                  //       if (controller.brandsError.value.isNotEmpty)
-                  //         Padding(
-                  //           padding: const EdgeInsets.only(top: 10),
-                  //           child: Container(
-                  //             width: double.infinity,
-                  //             padding: const EdgeInsets.all(16),
-                  //             decoration: BoxDecoration(
-                  //               color: const Color(0xFFFFF1F2),
-                  //               borderRadius: BorderRadius.circular(15),
-                  //             ),
-                  //             child: Text(controller.brandsError.value),
-                  //           ),
-                  //         ),
-                  //     ],
-                  //   );
-                  // }),
-                  const SizedBox(height: 40),
-                  Text(
-                    'نظرات مشتریان',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Obx(() {
-                    final isLoading = controller.isLoadingTestimonials.value;
-                    final hasError = controller.testimonialsError.value.isNotEmpty;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 230,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: controller.testimonials.isEmpty
-                                ? 1
-                                : controller.testimonials.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 16),
-                            itemBuilder: (context, index) {
-                              if (controller.testimonials.isEmpty) {
-                                return const _TestimonialCard(
-                                  item: TestimonialItem(
-                                    id: 'placeholder',
-                                    companyName: 'نمونه',
-                                    personName: 'کاربر نمونه',
-                                    role: 'مدیر',
-                                    quote:
-                                        'در حال بارگذاری نظرات مشتریان هستیم. در صورت مشکل اتصال، کمی بعد دوباره تلاش کنید.',
-                                    avatarUrl: '',
-                                  ),
-                                );
-                              }
-
-                              final item = controller.testimonials[index];
-                              return _TestimonialCard(item: item);
-                            },
+                    const SizedBox(height: 16),
+                    Obx(() {
+                      if (controller.isLoadingProvinces.value) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: CircularProgressIndicator(),
                           ),
-                        ),
-                        if (isLoading)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 12),
-                            child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      if (controller.provincesError.value.isNotEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                        if (hasError)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Text(controller.testimonialsError.value),
+                          child: Text(controller.provincesError.value),
+                        );
+                      }
+
+                      return SizedBox(
+                        height: 200,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: controller.provinces.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 14),
+                          itemBuilder: (context, index) {
+                            final province = controller.provinces[index];
+                            return _ProvinceCard(province: province);
+                          },
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 28),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: Image.network(
+                        _mainBannerUrl,
+                        fit: BoxFit.fitHeight,
+                        errorBuilder: (_, __, ___) => const DecoratedBox(
+                          decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                          child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 34),
+                    Text(
+                      'تابلو پارتی',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Obx(() {
+                      final items = controller.billboardParties;
+
+                      if (controller.isLoadingBillboardParties.value && items.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      if (controller.billboardPartiesError.value.isNotEmpty &&
+                          items.isEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Text(controller.billboardPartiesError.value),
+                        );
+                      }
+
+                      return SizedBox(
+                        height: 330,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: items.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 14),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return _PartyBillboardCard(item: item);
+                          },
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 28),
+                    _PartyBannerCard(imageUrl: _partyBannerUrl),
+                    const SizedBox(height: 40),
+                    // Text(
+                    //   'برند های خودرویی',
+                    //   style: theme.textTheme.titleLarge?.copyWith(
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 16),
+                    // Obx(() {
+                    //   final list = controller.brands.toList();
+                    //
+                    //   if (list.isEmpty &&
+                    //       !controller.isLoadingBrands.value &&
+                    //       controller.brandsError.value.isEmpty) {
+                    //     return const Text('برندی برای نمایش وجود ندارد.');
+                    //   }
+                    //
+                    //   return Column(
+                    //     crossAxisAlignment: CrossAxisAlignment.start,
+                    //     children: [
+                    //       _AutoBrandsRow(
+                    //         brands: list,
+                    //         moveRight: true,
+                    //       ),
+                    //       const SizedBox(height: 14),
+                    //       _AutoBrandsRow(
+                    //         brands: list,
+                    //         moveRight: false,
+                    //       ),
+                    //       if (controller.isLoadingBrands.value)
+                    //         const Padding(
+                    //           padding: EdgeInsets.only(top: 10),
+                    //           child: Center(child: CircularProgressIndicator()),
+                    //         ),
+                    //       if (controller.brandsError.value.isNotEmpty)
+                    //         Padding(
+                    //           padding: const EdgeInsets.only(top: 10),
+                    //           child: Container(
+                    //             width: double.infinity,
+                    //             padding: const EdgeInsets.all(16),
+                    //             decoration: BoxDecoration(
+                    //               color: const Color(0xFFFFF1F2),
+                    //               borderRadius: BorderRadius.circular(15),
+                    //             ),
+                    //             child: Text(controller.brandsError.value),
+                    //           ),
+                    //         ),
+                    //     ],
+                    //   );
+                    // }),
+                    const SizedBox(height: 40),
+                    Center(
+                      child: Text(
+                        'نظرات مشتریان',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Obx(() {
+                      final isLoading = controller.isLoadingTestimonials.value;
+                      final hasError = controller.testimonialsError.value.isNotEmpty;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 230,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: controller.testimonials.isEmpty
+                                  ? 1
+                                  : controller.testimonials.length,
+                              separatorBuilder: (_, __) => const SizedBox(width: 16),
+                              itemBuilder: (context, index) {
+                                if (controller.testimonials.isEmpty) {
+                                  return const _TestimonialCard(
+                                    item: TestimonialItem(
+                                      id: 'placeholder',
+                                      companyName: 'نمونه',
+                                      personName: 'کاربر نمونه',
+                                      role: 'مدیر',
+                                      quote:
+                                          'در حال بارگذاری نظرات مشتریان هستیم. در صورت مشکل اتصال، کمی بعد دوباره تلاش کنید.',
+                                      avatarUrl: '',
+                                    ),
+                                  );
+                                }
+
+                                final item = controller.testimonials[index];
+                                return _TestimonialCard(item: item);
+                              },
                             ),
                           ),
-                      ],
-                    );
-                  }),
-                  const SizedBox(height: 40),
+                          if (isLoading)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 12),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          if (hasError)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF1F2),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Text(controller.testimonialsError.value),
+                              ),
+                            ),
+                        ],
+                      );
+                    }),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
 }
 
 class _PartyBannerCard extends StatelessWidget {
