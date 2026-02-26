@@ -19,7 +19,7 @@ class BillboardsController extends GetxController {
 
   final selectedProvinceIds = <String>{}.obs;
   final provinceSearch = ''.obs;
-  final isProvinceFilterExpanded = true.obs;
+  final isProvinceFilterExpanded = false.obs;
   final selectedCity = ''.obs;
   final selectedType = ''.obs;
   final selectedArea = ''.obs;
