@@ -297,29 +297,22 @@ class _FilterPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('فیلتر بر اساس استان', style: Theme.of(context).textTheme.titleMedium),
+            Text('فیلتر بر اساس استان (چند انتخاب)', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             Obx(
-              () => DropdownButtonFormField<String>(
-                value: controller.selectedProvinceId.value.isEmpty
-                    ? null
-                    : controller.selectedProvinceId.value,
-                items: [
-                  const DropdownMenuItem<String>(
-                    value: '',
-                    child: Text('همه استان‌ها'),
-                  ),
-                  ...controller.provinces.map(
-                    (p) => DropdownMenuItem<String>(
-                      value: p.id,
-                      child: Text(p.name),
-                    ),
-                  ),
-                ],
-                onChanged: controller.applyProvinceFilter,
-                decoration: const InputDecoration(
-                  hintText: 'انتخاب استان',
-                ),
+              () => Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: controller.provinces
+                    .map(
+                      (p) => FilterChip(
+                        label: Text(p.name),
+                        selected: controller.selectedProvinceIds.contains(p.id),
+                        onSelected: (selected) =>
+                            controller.toggleProvinceFilter(p.id, selected),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
             const SizedBox(height: 16),

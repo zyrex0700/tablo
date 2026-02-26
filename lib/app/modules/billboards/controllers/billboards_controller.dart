@@ -17,7 +17,7 @@ class BillboardsController extends GetxController {
   final isLoading = false.obs;
   final error = ''.obs;
 
-  final selectedProvinceId = ''.obs;
+  final selectedProvinceIds = <String>{}.obs;
   final selectedCity = ''.obs;
   final selectedType = ''.obs;
   final selectedArea = ''.obs;
@@ -70,9 +70,6 @@ class BillboardsController extends GetxController {
 
     try {
       final query = <String, String>{'limit': '120'};
-      if (selectedProvinceId.value.isNotEmpty) {
-        query['province_id'] = selectedProvinceId.value;
-      }
       if (selectedCity.value.isNotEmpty) {
         query['city'] = selectedCity.value;
       }
@@ -116,20 +113,26 @@ class BillboardsController extends GetxController {
       final itemArea = item.area.trim().toLowerCase();
       final itemCode = item.code.trim().toLowerCase();
 
+      final matchProvince =
+          selectedProvinceIds.isEmpty || selectedProvinceIds.contains(item.provinceId);
       final matchType = typeFilter.isEmpty || itemType == typeFilter;
       final matchArea = areaFilter.isEmpty || itemArea.contains(areaFilter);
       final matchCode = codeFilter.isEmpty || itemCode.contains(codeFilter);
 
-      return matchType && matchArea && matchCode;
+      return matchProvince && matchType && matchArea && matchCode;
     }).toList();
 
     billboards.assignAll(filtered);
     totalBillboards.value = filtered.length;
   }
 
-  void applyProvinceFilter(String? provinceId) {
-    selectedProvinceId.value = provinceId ?? '';
-    fetchBillboards();
+  void toggleProvinceFilter(String provinceId, bool selected) {
+    if (selected) {
+      selectedProvinceIds.add(provinceId);
+    } else {
+      selectedProvinceIds.remove(provinceId);
+    }
+    _applyClientFilters();
   }
 
   void applyCityFilter(String city) {
@@ -153,7 +156,7 @@ class BillboardsController extends GetxController {
   }
 
   void clearAllFilters() {
-    selectedProvinceId.value = '';
+    selectedProvinceIds.clear();
     selectedCity.value = '';
     selectedType.value = '';
     selectedArea.value = '';
