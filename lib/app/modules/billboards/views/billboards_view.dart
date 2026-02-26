@@ -47,7 +47,7 @@ class BillboardsView extends GetView<BillboardsController> {
                         itemCount: controller.billboards.length,
                         itemBuilder: (context, index) {
                           final item = controller.billboards[index];
-                          return _BillboardGridCard(item: item);
+                          return _BillboardGridCard(item: item, isMobile: false);
                         },
                       );
                     }),
@@ -78,7 +78,7 @@ class _MobileBillboardsScaffold extends StatelessWidget {
       backgroundColor: const Color(0xFFE5E7EB),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+          padding: const EdgeInsets.fromLTRB(10, 14, 10, 0),
           child: Column(
             children: [
               _StatsBar(controller: controller, isMobile: true),
@@ -94,16 +94,17 @@ class _MobileBillboardsScaffold extends StatelessWidget {
                   }
 
                   return GridView.builder(
-                    padding: const EdgeInsets.only(bottom: 90),
+                    padding: const EdgeInsets.only(bottom: 96),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 0.62,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 0.57,
                     ),
                     itemCount: controller.billboards.length,
                     itemBuilder: (context, index) {
-                      return _BillboardGridCard(item: controller.billboards[index]);
+                      final item = controller.billboards[index];
+                      return _BillboardGridCard(item: item, isMobile: true);
                     },
                   );
                 }),
@@ -125,58 +126,92 @@ class _StatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () {
-        final chips = [
-          _StatChip(
-            label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
-            color: const Color(0xFFE0E7FF),
-            dotColor: const Color(0xFF1E40AF),
-          ),
-          _StatChip(
-            label: 'تعداد استان‌ها: ${controller.provinces.length}',
-            color: const Color(0xFFDCFCE7),
-            dotColor: const Color(0xFF16A34A),
-          ),
-          _StatChip(
-            label: 'تعداد شهرها: ${controller.billboards.map((e) => e.city).toSet().length}',
-            color: const Color(0xFFFFEDD5),
-            dotColor: const Color(0xFFF59E0B),
-          ),
-        ];
+    return Obx(() {
+      final totalCities = controller.billboards.map((e) => e.city).toSet().length;
 
-        if (!isMobile) {
-          return Row(
-            children: [
-              ...chips.expand((chip) => [chip, const SizedBox(width: 8)]),
-            ]..removeLast(),
-          );
-        }
-
-        return Column(
+      if (!isMobile) {
+        return Row(
           children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: chips,
+            _StatChip(
+              label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
+              color: const Color(0xFFE0E7FF),
+              dotColor: const Color(0xFF1E40AF),
             ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _showFilterSheet(context, controller),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.primary,
-                side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
-              ),
-              icon: const Icon(Icons.tune_rounded),
-              label: const Text('فیلترها'),
+            const SizedBox(width: 8),
+            _StatChip(
+              label: 'تعداد استان‌ها: ${controller.provinces.length}',
+              color: const Color(0xFFDCFCE7),
+              dotColor: const Color(0xFF16A34A),
+            ),
+            const SizedBox(width: 8),
+            _StatChip(
+              label: 'تعداد شهرها: $totalCities',
+              color: const Color(0xFFFFEDD5),
+              dotColor: const Color(0xFFF59E0B),
             ),
           ],
         );
-      },
-    );
+      }
+
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _StatChip(
+                  label: 'تعداد استان‌ها: ${controller.provinces.length}',
+                  color: const Color(0xFFDCFCE7),
+                  dotColor: const Color(0xFF16A34A),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatChip(
+                  label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
+                  color: const Color(0xFFE0E7FF),
+                  dotColor: const Color(0xFF1E40AF),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showFilterSheet(context),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                      ),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text('فیلترها'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _StatChip(
+                  label: 'تعداد شهرها: $totalCities',
+                  color: const Color(0xFFFFEDD5),
+                  dotColor: const Color(0xFFF59E0B),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    });
   }
 
-  void _showFilterSheet(BuildContext context, BillboardsController controller) {
+  void _showFilterSheet(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -206,15 +241,22 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
           const SizedBox(width: 8),
           Icon(Icons.circle, size: 9, color: dotColor),
         ],
@@ -260,9 +302,7 @@ class _FilterPanel extends StatelessWidget {
                 ),
               ],
               onChanged: controller.applyProvinceFilter,
-              decoration: const InputDecoration(
-                hintText: 'انتخاب استان',
-              ),
+              decoration: const InputDecoration(hintText: 'انتخاب استان'),
             ),
           ),
           const SizedBox(height: 16),
@@ -291,31 +331,34 @@ class _FilterPanel extends StatelessWidget {
 }
 
 class _BillboardGridCard extends StatelessWidget {
-  const _BillboardGridCard({required this.item});
+  const _BillboardGridCard({required this.item, required this.isMobile});
 
   final BillboardItem item;
+  final bool isMobile;
 
   @override
   Widget build(BuildContext context) {
+    final cardRadius = BorderRadius.circular(isMobile ? 18 : 15);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: cardRadius,
         border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(isMobile ? 8 : 10),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
-                height: 126,
-                width: double.infinity,
+                height: isMobile ? 118 : 160,
                 child: Image.network(
                   item.imageUrl,
+                  width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const DecoratedBox(
                     decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
@@ -324,30 +367,52 @@ class _BillboardGridCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: isMobile ? 10 : 12),
             Text(
               item.type,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 3),
-            Text('استان: ${item.provinceName}، شهر: ${item.city}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 6),
+            Text(
+              'استان: ${item.provinceName}، شهر: ${item.city}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                  ),
+            ),
             const SizedBox(height: 2),
-            Text('منطقه: ${item.area}', maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              'منطقه: ${item.area.isEmpty ? '-' : item.area}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                  ),
+            ),
             const SizedBox(height: 2),
-            Text('کد تابلو: ${item.code}'),
+            Text(
+              'کد تابلو: ${item.code.isEmpty ? '-' : item.code}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.black54,
+                  ),
+            ),
             const Spacer(),
-            Center(
-              child: Text(
-                item.rentLabel,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
+            Text(
+              item.rentLabel,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
           ],
         ),
@@ -365,23 +430,23 @@ class _MobileBottomNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <({String label, IconData icon, String route})>[
       (label: 'جستجو', icon: Icons.search, route: AppRoutes.contactUs),
-      (label: 'تابلوها', icon: Icons.border_all_rounded, route: AppRoutes.billboards),
+      (label: 'تابلوها', icon: Icons.crop_square_rounded, route: AppRoutes.billboards),
       (label: 'خانه', icon: Icons.home_outlined, route: AppRoutes.home),
       (label: 'علاقه‌مندی', icon: Icons.favorite_border, route: AppRoutes.magazine),
       (label: 'حساب', icon: Icons.person_outline, route: AppRoutes.contactUs),
     ];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: Color(0x22000000),
-            blurRadius: 18,
-            offset: Offset(0, 2),
+            blurRadius: 16,
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -397,7 +462,7 @@ class _MobileBottomNavigation extends StatelessWidget {
                   }
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
