@@ -1,7 +1,7 @@
+import '../../../data/models/billboard_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../data/models/billboard_item.dart';
 import '../../../routes/app_routes.dart';
 import '../controllers/billboards_controller.dart';
 
@@ -24,7 +24,7 @@ class BillboardsView extends GetView<BillboardsController> {
             Expanded(
               child: Column(
                 children: [
-                  _StatsBar(controller: controller, isMobile: false),
+                  _StatsBar(controller: controller),
                   const SizedBox(height: 16),
                   Expanded(
                     child: Obx(() {
@@ -47,7 +47,7 @@ class BillboardsView extends GetView<BillboardsController> {
                         itemCount: controller.billboards.length,
                         itemBuilder: (context, index) {
                           final item = controller.billboards[index];
-                          return _BillboardGridCard(item: item, isMobile: false);
+                          return _BillboardGridCard(item: item);
                         },
                       );
                     }),
@@ -78,11 +78,11 @@ class _MobileBillboardsScaffold extends StatelessWidget {
       backgroundColor: const Color(0xFFE5E7EB),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 14, 10, 0),
+          padding: const EdgeInsets.fromLTRB(10, 12, 10, 0),
           child: Column(
             children: [
-              _StatsBar(controller: controller, isMobile: true),
-              const SizedBox(height: 12),
+              _MobileStatsBar(controller: controller),
+              const SizedBox(height: 10),
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value) {
@@ -98,13 +98,12 @@ class _MobileBillboardsScaffold extends StatelessWidget {
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 8,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 0.57,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.63,
                     ),
                     itemCount: controller.billboards.length,
                     itemBuilder: (context, index) {
-                      final item = controller.billboards[index];
-                      return _BillboardGridCard(item: item, isMobile: true);
+                      return _MobileBillboardCard(item: controller.billboards[index]);
                     },
                   );
                 }),
@@ -119,46 +118,51 @@ class _MobileBillboardsScaffold extends StatelessWidget {
 }
 
 class _StatsBar extends StatelessWidget {
-  const _StatsBar({required this.controller, required this.isMobile});
+  const _StatsBar({required this.controller});
 
   final BillboardsController controller;
-  final bool isMobile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(
+      () => Row(
+        children: [
+          _StatChip(
+            label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
+            color: const Color(0xFFE0E7FF),
+          ),
+          const SizedBox(width: 8),
+          _StatChip(
+            label: 'تعداد استان‌ها: ${controller.provinces.length}',
+            color: const Color(0xFFDCFCE7),
+          ),
+          const SizedBox(width: 8),
+          _StatChip(
+            label: 'تعداد شهرها: ${controller.billboards.map((e) => e.city).toSet().length}',
+            color: const Color(0xFFFFEDD5),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileStatsBar extends StatelessWidget {
+  const _MobileStatsBar({required this.controller});
+
+  final BillboardsController controller;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final totalCities = controller.billboards.map((e) => e.city).toSet().length;
 
-      if (!isMobile) {
-        return Row(
-          children: [
-            _StatChip(
-              label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
-              color: const Color(0xFFE0E7FF),
-              dotColor: const Color(0xFF1E40AF),
-            ),
-            const SizedBox(width: 8),
-            _StatChip(
-              label: 'تعداد استان‌ها: ${controller.provinces.length}',
-              color: const Color(0xFFDCFCE7),
-              dotColor: const Color(0xFF16A34A),
-            ),
-            const SizedBox(width: 8),
-            _StatChip(
-              label: 'تعداد شهرها: $totalCities',
-              color: const Color(0xFFFFEDD5),
-              dotColor: const Color(0xFFF59E0B),
-            ),
-          ],
-        );
-      }
-
       return Column(
         children: [
           Row(
             children: [
               Expanded(
-                child: _StatChip(
+                child: _MobileStatChip(
                   label: 'تعداد استان‌ها: ${controller.provinces.length}',
                   color: const Color(0xFFDCFCE7),
                   dotColor: const Color(0xFF16A34A),
@@ -166,7 +170,7 @@ class _StatsBar extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _StatChip(
+                child: _MobileStatChip(
                   label: 'تعداد کل تابلوها: ${controller.totalBillboards.value}',
                   color: const Color(0xFFE0E7FF),
                   dotColor: const Color(0xFF1E40AF),
@@ -178,27 +182,21 @@ class _StatsBar extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Align(
-                  alignment: Alignment.center,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showFilterSheet(context),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      ),
-                      foregroundColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                child: OutlinedButton.icon(
+                  onPressed: () => _showFilterSheet(context),
+                  icon: const Icon(Icons.tune_rounded, size: 18),
+                  label: const Text('فیلترها'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
                     ),
-                    icon: const Icon(Icons.tune_rounded, size: 18),
-                    label: const Text('فیلترها'),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _StatChip(
+                child: _MobileStatChip(
                   label: 'تعداد شهرها: $totalCities',
                   color: const Color(0xFFFFEDD5),
                   dotColor: const Color(0xFFF59E0B),
@@ -219,7 +217,7 @@ class _StatsBar extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Padding(
+      builder: (context) => Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         child: _FilterPanel(controller: controller),
       ),
@@ -228,7 +226,26 @@ class _StatsBar extends StatelessWidget {
 }
 
 class _StatChip extends StatelessWidget {
-  const _StatChip({
+  const _StatChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
+class _MobileStatChip extends StatelessWidget {
+  const _MobileStatChip({
     required this.label,
     required this.color,
     required this.dotColor,
@@ -241,24 +258,22 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(
+          Expanded(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
           const SizedBox(width: 8),
-          Icon(Icons.circle, size: 9, color: dotColor),
+          Icon(Icons.circle, color: dotColor, size: 9),
         ],
       ),
     );
@@ -280,7 +295,6 @@ class _FilterPanel extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Text('فیلتر بر اساس استان', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -302,7 +316,9 @@ class _FilterPanel extends StatelessWidget {
                 ),
               ],
               onChanged: controller.applyProvinceFilter,
-              decoration: const InputDecoration(hintText: 'انتخاب استان'),
+              decoration: const InputDecoration(
+                hintText: 'انتخاب استان',
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -331,34 +347,86 @@ class _FilterPanel extends StatelessWidget {
 }
 
 class _BillboardGridCard extends StatelessWidget {
-  const _BillboardGridCard({required this.item, required this.isMobile});
+  const _BillboardGridCard({required this.item});
 
   final BillboardItem item;
-  final bool isMobile;
 
   @override
   Widget build(BuildContext context) {
-    final cardRadius = BorderRadius.circular(isMobile ? 18 : 15);
+    return Container(
+      width: 250,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 175,
+            child: Image.network(
+              item.imageUrl,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const DecoratedBox(
+                decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.type,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text('${item.city} | ${item.area}'),
+                const SizedBox(height: 4),
+                Text('ابعاد: ${item.dimensionLabel}'),
+                const SizedBox(height: 4),
+                Text('کد تابلو: ${item.code}'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
+class _MobileBillboardCard extends StatelessWidget {
+  const _MobileBillboardCard({required this.item});
+
+  final BillboardItem item;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: cardRadius,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFD1D5DB)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: EdgeInsets.all(isMobile ? 8 : 10),
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
-                height: isMobile ? 118 : 160,
+                height: 120,
                 child: Image.network(
                   item.imageUrl,
-                  width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const DecoratedBox(
                     decoration: BoxDecoration(color: Color(0xFFE5E7EB)),
@@ -367,22 +435,22 @@ class _BillboardGridCard extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: isMobile ? 10 : 12),
+            const SizedBox(height: 8),
             Text(
               item.type,
+              textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               'استان: ${item.provinceName}، شهر: ${item.city}',
+              textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.black54,
                   ),
@@ -390,22 +458,14 @@ class _BillboardGridCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               'منطقه: ${item.area.isEmpty ? '-' : item.area}',
+              textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.black54,
                   ),
             ),
             const SizedBox(height: 2),
-            Text(
-              'کد تابلو: ${item.code.isEmpty ? '-' : item.code}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.black54,
-                  ),
-            ),
-            const Spacer(),
             Text(
               item.rentLabel,
               textAlign: TextAlign.center,
