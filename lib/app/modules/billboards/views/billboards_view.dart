@@ -297,22 +297,60 @@ class _FilterPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('فیلتر بر اساس استان (چند انتخاب)', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
             Obx(
-              () => Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: controller.provinces
-                    .map(
-                      (p) => FilterChip(
-                        label: Text(p.name),
-                        selected: controller.selectedProvinceIds.contains(p.id),
-                        onSelected: (selected) =>
-                            controller.toggleProvinceFilter(p.id, selected),
+              () => Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      onTap: controller.toggleProvinceFilterExpanded,
+                      child: Row(
+                        children: [
+                          Icon(
+                            controller.isProvinceFilterExpanded.value
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'فیلتر بر اساس استان:',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ],
                       ),
-                    )
-                    .toList(),
+                    ),
+                    if (controller.isProvinceFilterExpanded.value) ...[
+                      const SizedBox(height: 10),
+                      TextField(
+                        onChanged: controller.updateProvinceSearch,
+                        decoration: const InputDecoration(
+                          hintText: 'جستجوی استان...',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...controller.filteredProvinces.map(
+                        (p) => CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          controlAffinity: ListTileControlAffinity.trailing,
+                          value: controller.selectedProvinceIds.contains(p.id),
+                          onChanged: (selected) =>
+                              controller.toggleProvinceFilter(p.id, selected ?? false),
+                          title: Text(p.name),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),

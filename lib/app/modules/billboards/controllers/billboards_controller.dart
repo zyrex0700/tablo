@@ -18,12 +18,26 @@ class BillboardsController extends GetxController {
   final error = ''.obs;
 
   final selectedProvinceIds = <String>{}.obs;
+  final provinceSearch = ''.obs;
+  final isProvinceFilterExpanded = true.obs;
   final selectedCity = ''.obs;
   final selectedType = ''.obs;
   final selectedArea = ''.obs;
   final selectedCode = ''.obs;
 
   final totalBillboards = 0.obs;
+
+
+  List<ProvinceModel> get filteredProvinces {
+    final search = provinceSearch.value.trim().toLowerCase();
+    if (search.isEmpty) {
+      return provinces;
+    }
+
+    return provinces
+        .where((p) => p.name.toLowerCase().contains(search))
+        .toList();
+  }
 
   List<String> get availableTypes {
     return allBillboards
@@ -135,6 +149,14 @@ class BillboardsController extends GetxController {
     _applyClientFilters();
   }
 
+  void toggleProvinceFilterExpanded() {
+    isProvinceFilterExpanded.value = !isProvinceFilterExpanded.value;
+  }
+
+  void updateProvinceSearch(String value) {
+    provinceSearch.value = value;
+  }
+
   void applyCityFilter(String city) {
     selectedCity.value = city.trim();
     fetchBillboards();
@@ -157,6 +179,7 @@ class BillboardsController extends GetxController {
 
   void clearAllFilters() {
     selectedProvinceIds.clear();
+    provinceSearch.value = '';
     selectedCity.value = '';
     selectedType.value = '';
     selectedArea.value = '';
