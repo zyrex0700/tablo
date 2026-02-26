@@ -11,15 +11,42 @@ class BillboardsController extends GetxController {
   static const _provincesApi = 'https://tablo.ir/my_api/provinces/list.php';
 
   final billboards = <BillboardItem>[].obs;
+  final allBillboards = <BillboardItem>[].obs;
   final provinces = <ProvinceModel>[].obs;
 
   final isLoading = false.obs;
   final error = ''.obs;
 
-  final selectedProvinceId = ''.obs;
+  final selectedProvinceIds = <String>{}.obs;
+  final provinceSearch = ''.obs;
+  final isProvinceFilterExpanded = false.obs;
   final selectedCity = ''.obs;
+  final selectedType = ''.obs;
+  final selectedArea = ''.obs;
+  final selectedCode = ''.obs;
 
   final totalBillboards = 0.obs;
+
+
+  List<ProvinceModel> get filteredProvinces {
+    final search = provinceSearch.value.trim().toLowerCase();
+    if (search.isEmpty) {
+      return provinces;
+    }
+
+    return provinces
+        .where((p) => p.name.toLowerCase().contains(search))
+        .toList();
+  }
+
+  List<String> get availableTypes {
+    return allBillboards
+        .map((item) => item.type.trim())
+        .where((type) => type.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+  }
 
   @override
   void onInit() {
@@ -57,9 +84,6 @@ class BillboardsController extends GetxController {
 
     try {
       final query = <String, String>{'limit': '120'};
-      if (selectedProvinceId.value.isNotEmpty) {
-        query['province_id'] = selectedProvinceId.value;
-      }
       if (selectedCity.value.isNotEmpty) {
         query['city'] = selectedCity.value;
       }
@@ -84,8 +108,8 @@ class BillboardsController extends GetxController {
           .map(BillboardItem.fromJson)
           .toList();
 
-      billboards.assignAll(items);
-      totalBillboards.value = items.length;
+      allBillboards.assignAll(items);
+      _applyClientFilters();
     } catch (_) {
       error.value = 'اتصال به سرور برقرار نشد.';
     } finally {
@@ -93,13 +117,73 @@ class BillboardsController extends GetxController {
     }
   }
 
-  void applyProvinceFilter(String? provinceId) {
-    selectedProvinceId.value = provinceId ?? '';
-    fetchBillboards();
+  void _applyClientFilters() {
+    final typeFilter = selectedType.value.trim().toLowerCase();
+    final areaFilter = selectedArea.value.trim().toLowerCase();
+    final codeFilter = selectedCode.value.trim().toLowerCase();
+
+    final filtered = allBillboards.where((item) {
+      final itemType = item.type.trim().toLowerCase();
+      final itemArea = item.area.trim().toLowerCase();
+      final itemCode = item.code.trim().toLowerCase();
+
+      final matchProvince =
+          selectedProvinceIds.isEmpty || selectedProvinceIds.contains(item.provinceId);
+      final matchType = typeFilter.isEmpty || itemType == typeFilter;
+      final matchArea = areaFilter.isEmpty || itemArea.contains(areaFilter);
+      final matchCode = codeFilter.isEmpty || itemCode.contains(codeFilter);
+
+      return matchProvince && matchType && matchArea && matchCode;
+    }).toList();
+
+    billboards.assignAll(filtered);
+    totalBillboards.value = filtered.length;
+  }
+
+  void toggleProvinceFilter(String provinceId, bool selected) {
+    if (selected) {
+      selectedProvinceIds.add(provinceId);
+    } else {
+      selectedProvinceIds.remove(provinceId);
+    }
+    _applyClientFilters();
+  }
+
+  void toggleProvinceFilterExpanded() {
+    isProvinceFilterExpanded.value = !isProvinceFilterExpanded.value;
+  }
+
+  void updateProvinceSearch(String value) {
+    provinceSearch.value = value;
   }
 
   void applyCityFilter(String city) {
     selectedCity.value = city.trim();
+    fetchBillboards();
+  }
+
+  void applyTypeFilter(String? type) {
+    selectedType.value = type?.trim() ?? '';
+    _applyClientFilters();
+  }
+
+  void applyAreaFilter(String area) {
+    selectedArea.value = area.trim();
+    _applyClientFilters();
+  }
+
+  void applyCodeFilter(String code) {
+    selectedCode.value = code.trim();
+    _applyClientFilters();
+  }
+
+  void clearAllFilters() {
+    selectedProvinceIds.clear();
+    provinceSearch.value = '';
+    selectedCity.value = '';
+    selectedType.value = '';
+    selectedArea.value = '';
+    selectedCode.value = '';
     fetchBillboards();
   }
 }

@@ -11,6 +11,7 @@ import '../../../data/models/billboard_map_item.dart';
 import '../../../data/models/brand_item.dart';
 import '../../../data/models/province_model.dart';
 import '../../../data/models/testimonial_item.dart';
+import '../../../routes/app_routes.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -22,6 +23,11 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 768;
+    if (isMobile) {
+      return _MobileHomeScaffold(controller: controller);
+    }
+
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -329,6 +335,257 @@ class HomeView extends GetView<HomeController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MobileHomeScaffold extends StatelessWidget {
+  const _MobileHomeScaffold({required this.controller});
+
+  final HomeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFE5E7EB),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  children: [
+                    TextButton(onPressed: () {}, child: const Text('ورود')),
+                    const Spacer(),
+                    Text(
+                      'تابلو',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Icon(Icons.menu_rounded, color: Color(0xFF374151), size: 28),
+                  ],
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                padding: const EdgeInsets.fromLTRB(14, 18, 14, 24),
+                height: 480,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFAAD1DE),
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                child: Column(
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1A000000),
+                            blurRadius: 16,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const TextField(
+                        decoration: InputDecoration(
+                          hintText: 'جستجو در تابلوها (شهر، کد، محور...)',
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.search, color: Color(0xFF2B38D2)),
+                          contentPadding: EdgeInsets.symmetric(vertical: 18),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      width: 52,
+                      height: 52,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x442B38D2),
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Obx(
+                        () => Text(
+                          controller.billboards.length.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(flex: 2),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 26),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'محبوب ترین مناطق',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 150,
+                child: Obx(
+                  () => ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: controller.provinces.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, index) {
+                      final province = controller.provinces[index];
+                      return SizedBox(
+                        width: 140,
+                        child: Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: Image.network(
+                                province.imageUrl,
+                                width: 140,
+                                height: 104,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const DecoratedBox(
+                                  decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                                  child: SizedBox(
+                                    width: 140,
+                                    height: 104,
+                                    child: Icon(Icons.image_not_supported_outlined),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              province.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 96),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.network(
+                    HomeView._mainBannerUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const DecoratedBox(
+                      decoration: BoxDecoration(color: Color(0xFFE2E8F0)),
+                      child: SizedBox(
+                        height: 150,
+                        child: Center(child: Text('خطا در بارگذاری بنر اصلی')),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: const _MobileBottomNavigation(currentRoute: AppRoutes.home),
+    );
+  }
+}
+
+class _MobileBottomNavigation extends StatelessWidget {
+  const _MobileBottomNavigation({required this.currentRoute});
+
+  final String currentRoute;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <({String label, IconData icon, String route})>[
+      (label: 'جستجو', icon: Icons.search, route: AppRoutes.contactUs),
+      (label: 'تابلوها', icon: Icons.crop_square_rounded, route: AppRoutes.billboards),
+      (label: 'خانه', icon: Icons.home_outlined, route: AppRoutes.home),
+      (label: 'علاقه‌مندی', icon: Icons.favorite_border, route: AppRoutes.magazine),
+      (label: 'حساب', icon: Icons.person_outline, route: AppRoutes.contactUs),
+    ];
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 16,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: items
+            .map(
+              (item) => InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  if (item.route != currentRoute) {
+                    Get.toNamed(item.route);
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        item.icon,
+                        color: item.route == currentRoute
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey.shade600,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.label,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: item.route == currentRoute
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
