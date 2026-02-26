@@ -11,6 +11,7 @@ class BillboardsController extends GetxController {
   static const _provincesApi = 'https://tablo.ir/my_api/provinces/list.php';
 
   final billboards = <BillboardItem>[].obs;
+  final allBillboards = <BillboardItem>[].obs;
   final provinces = <ProvinceModel>[].obs;
 
   final isLoading = false.obs;
@@ -18,8 +19,20 @@ class BillboardsController extends GetxController {
 
   final selectedProvinceId = ''.obs;
   final selectedCity = ''.obs;
+  final selectedType = ''.obs;
+  final selectedArea = ''.obs;
+  final selectedCode = ''.obs;
 
   final totalBillboards = 0.obs;
+
+  List<String> get availableTypes {
+    return allBillboards
+        .map((item) => item.type.trim())
+        .where((type) => type.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+  }
 
   @override
   void onInit() {
@@ -84,13 +97,34 @@ class BillboardsController extends GetxController {
           .map(BillboardItem.fromJson)
           .toList();
 
-      billboards.assignAll(items);
-      totalBillboards.value = items.length;
+      allBillboards.assignAll(items);
+      _applyClientFilters();
     } catch (_) {
       error.value = 'اتصال به سرور برقرار نشد.';
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _applyClientFilters() {
+    final typeFilter = selectedType.value.trim().toLowerCase();
+    final areaFilter = selectedArea.value.trim().toLowerCase();
+    final codeFilter = selectedCode.value.trim().toLowerCase();
+
+    final filtered = allBillboards.where((item) {
+      final itemType = item.type.trim().toLowerCase();
+      final itemArea = item.area.trim().toLowerCase();
+      final itemCode = item.code.trim().toLowerCase();
+
+      final matchType = typeFilter.isEmpty || itemType == typeFilter;
+      final matchArea = areaFilter.isEmpty || itemArea.contains(areaFilter);
+      final matchCode = codeFilter.isEmpty || itemCode.contains(codeFilter);
+
+      return matchType && matchArea && matchCode;
+    }).toList();
+
+    billboards.assignAll(filtered);
+    totalBillboards.value = filtered.length;
   }
 
   void applyProvinceFilter(String? provinceId) {
@@ -100,6 +134,30 @@ class BillboardsController extends GetxController {
 
   void applyCityFilter(String city) {
     selectedCity.value = city.trim();
+    fetchBillboards();
+  }
+
+  void applyTypeFilter(String? type) {
+    selectedType.value = type?.trim() ?? '';
+    _applyClientFilters();
+  }
+
+  void applyAreaFilter(String area) {
+    selectedArea.value = area.trim();
+    _applyClientFilters();
+  }
+
+  void applyCodeFilter(String code) {
+    selectedCode.value = code.trim();
+    _applyClientFilters();
+  }
+
+  void clearAllFilters() {
+    selectedProvinceId.value = '';
+    selectedCity.value = '';
+    selectedType.value = '';
+    selectedArea.value = '';
+    selectedCode.value = '';
     fetchBillboards();
   }
 }

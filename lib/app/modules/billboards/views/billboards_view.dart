@@ -287,60 +287,104 @@ class _FilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('فیلتر بر اساس استان', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Obx(
-            () => DropdownButtonFormField<String>(
-              value: controller.selectedProvinceId.value.isEmpty
-                  ? null
-                  : controller.selectedProvinceId.value,
-              items: [
-                const DropdownMenuItem<String>(
-                  value: '',
-                  child: Text('همه استان‌ها'),
-                ),
-                ...controller.provinces.map(
-                  (p) => DropdownMenuItem<String>(
-                    value: p.id,
-                    child: Text(p.name),
+    return SingleChildScrollView(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('فیلتر بر اساس استان', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Obx(
+              () => DropdownButtonFormField<String>(
+                value: controller.selectedProvinceId.value.isEmpty
+                    ? null
+                    : controller.selectedProvinceId.value,
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: '',
+                    child: Text('همه استان‌ها'),
                   ),
+                  ...controller.provinces.map(
+                    (p) => DropdownMenuItem<String>(
+                      value: p.id,
+                      child: Text(p.name),
+                    ),
+                  ),
+                ],
+                onChanged: controller.applyProvinceFilter,
+                decoration: const InputDecoration(
+                  hintText: 'انتخاب استان',
                 ),
-              ],
-              onChanged: controller.applyProvinceFilter,
-              decoration: const InputDecoration(
-                hintText: 'انتخاب استان',
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text('فیلتر بر اساس شهر', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          TextField(
-            onSubmitted: controller.applyCityFilter,
-            decoration: const InputDecoration(
-              hintText: 'مثلاً تهران',
-              prefixIcon: Icon(Icons.search),
+            const SizedBox(height: 16),
+            Text('فیلتر بر اساس شهر', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            TextField(
+              onSubmitted: controller.applyCityFilter,
+              decoration: const InputDecoration(
+                hintText: 'مثلاً تهران',
+                prefixIcon: Icon(Icons.location_city_outlined),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: () {
-              controller.selectedProvinceId.value = '';
-              controller.selectedCity.value = '';
-              controller.fetchBillboards();
-            },
-            child: const Text('حذف فیلترها'),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text('فیلتر بر اساس نوع تابلو', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Obx(
+              () => DropdownButtonFormField<String>(
+                value: controller.selectedType.value.isEmpty
+                    ? null
+                    : controller.selectedType.value,
+                items: [
+                  const DropdownMenuItem<String>(
+                    value: '',
+                    child: Text('همه نوع‌ها'),
+                  ),
+                  ...controller.availableTypes.map(
+                    (type) => DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(type),
+                    ),
+                  ),
+                ],
+                onChanged: controller.applyTypeFilter,
+                decoration: const InputDecoration(
+                  hintText: 'مثلاً بیلبورد',
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('فیلتر بر اساس منطقه', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            TextField(
+              onChanged: controller.applyAreaFilter,
+              decoration: const InputDecoration(
+                hintText: 'مثلاً شریعتی',
+                prefixIcon: Icon(Icons.map_outlined),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('فیلتر بر اساس کد تابلو', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            TextField(
+              onChanged: controller.applyCodeFilter,
+              decoration: const InputDecoration(
+                hintText: 'مثلاً ۱۲۳',
+                prefixIcon: Icon(Icons.qr_code_2_outlined),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: controller.clearAllFilters,
+              child: const Text('حذف همه فیلترها'),
+            ),
+          ],
+        ),
       ),
     );
   }
